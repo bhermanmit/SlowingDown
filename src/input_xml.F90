@@ -1,6 +1,7 @@
 module input_xml
 
   use constants,      only: MAX_WORD_LEN, MAX_LINE_LEN
+  use global
   use nuclide_class,  only: n_nuclides, nuclides, Nuclide
   use output,         only: write_message, fatal_error, message
   use xml_interface
@@ -41,6 +42,14 @@ contains
 
     ! Parse input.xml file
     call open_xmldoc(doc, filename)
+
+    ! Number of particles
+    if (check_for_node(doc, "n_particles")) then
+      call get_node_value(doc, "n_particles", n_particles)
+    else
+      message = "Number of particles not specified in input."
+      call fatal_error()
+    end if
 
     ! Get list of nuclides
     call get_node_list(doc, "nuclide", node_nuc_list)

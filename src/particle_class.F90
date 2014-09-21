@@ -10,21 +10,51 @@ module particle_class
     private
 
     ! Particle properties
-    real(8) :: xyz(3) ! spatial position
-    real(8) :: uvw(3) ! direction of travel
+    integer :: n_collisions ! number of collisions
+    logical :: alive ! is the particle alive?
     real(8) :: E ! energy
+    real(8) :: uvw(3) ! direction of travel
+    real(8) :: xyz(3) ! spatial position
 
     ! Particle methods
     contains
+      procedure, public :: get_alive => particle_get_alive
+      procedure, public :: set_n_collisions => particle_set_n_collisions
       procedure, public :: start => particle_start
 
   end type Particle
 
 contains
 
-!======================================================================
+!===============================================================================
+! PARTICLE_GET_ALIVE
+!===============================================================================
+
+  function particle_get_alive(self) result(alive)
+
+    class(Particle) :: self
+    logical :: alive
+
+    alive = self % alive
+
+  end function particle_get_alive
+
+!===============================================================================
+! PARTICLE_SET_N_COLLISIONS
+!===============================================================================
+
+  subroutine particle_set_n_collisions(self, n_collisions)
+
+    class(Particle), intent(inout) :: self
+    integer, intent(in) :: n_collisions
+
+    self % n_collisions = n_collisions
+
+  end subroutine particle_set_n_collisions
+
+!===============================================================================
 ! PARTICLE_START samples particles' starting properties
-!======================================================================
+!===============================================================================
 
   subroutine particle_start(self)
 
@@ -47,6 +77,9 @@ contains
 
     ! Starting energy
     self % E = watt_spectrum()
+
+    ! Particle is alive
+    self % alive = .true.
 
   end subroutine particle_start
 
