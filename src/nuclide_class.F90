@@ -1,6 +1,6 @@
 module nuclide_class
 
-  use constants :: MAX_WORD_LEN
+  use constants,  only: MAX_WORD_LEN
 
   implicit none
 

@@ -1,6 +1,6 @@
 module xml_interface
 
-  use error,     only: fatal_error, message
+  use output,     only: fatal_error, message
   use openmc_fox
 
   implicit none
