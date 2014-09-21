@@ -5,6 +5,7 @@ module output
   use constants,  only: MAX_LINE_LEN
 
   implicit none
+  public
 
   ! saved module variables
   character(len=MAX_LINE_LEN), save :: message
@@ -122,7 +123,6 @@ contains
 
   subroutine fatal_error()
 
-    integer :: code      ! error code
     integer :: i_start   ! starting position
     integer :: i_end     ! ending position
     integer :: line_wrap ! length of line

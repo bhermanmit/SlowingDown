@@ -1,6 +1,7 @@
 module random
 
   implicit none
+  public
 
 contains
 

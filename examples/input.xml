@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<input>
+
+  <!-- Nuclide Information -->
+  <nuclide name="H-1">
+    <xs_file> ../data/h-1.xml </xs_file>
+  </nuclide>
+
+</input>

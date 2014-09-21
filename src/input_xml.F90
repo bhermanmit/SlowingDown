@@ -6,6 +6,8 @@ module input_xml
   use xml_interface
 
   implicit none
+  private
+  public :: read_input_xml
 
 contains
 
@@ -21,7 +23,6 @@ contains
     integer :: i
     logical :: file_exists
     type(Node), pointer :: doc => null()
-    type(Node), pointer :: xs_doc => null()
     type(Node), pointer :: node_nuc => null()
     type(NodeList), pointer :: node_nuc_list => null()
     type(Nuclide), pointer :: nuc => null()
@@ -56,11 +57,11 @@ contains
       nuc => nuclides(i)
 
       ! Check for scattering xs
-      if (check_for_node(node_nuc, "xs_scat")) then
-        call get_node_value(node_nuc, "xs_scat", xs_file)
-        call nuc % set_xs_s_path(xs_file)
+      if (check_for_node(node_nuc, "xs_file")) then
+        call get_node_value(node_nuc, "xs_file", xs_file)
+        call nuc % set_xs_file(xs_file)
       else
-        message = "Missing scattering cross section in nuclide."
+        message = "Missing cross section file in nuclide."
         call fatal_error()
       end if
     end do
@@ -82,7 +83,10 @@ contains
     character(len=MAX_LINE_LEN) :: filename
     character(len=MAX_WORD_LEN) :: name
     integer :: i
+    integer :: npts
     logical :: file_exists
+    real(8), allocatable :: E(:)
+    real(8), allocatable :: xs_s(:)
     type(Node), pointer :: doc => null()
     type(Nuclide), pointer :: nuc => null()
 
@@ -92,22 +96,37 @@ contains
       nuc => nuclides(i)
 
       ! Check if xs file exists 
-      filename = nuc % get_xs_s_path()
+      filename = nuc % get_xs_file()
       inquire(FILE=filename, EXIST=file_exists)
       if (.not. file_exists) then
-        message = "Scattering XS file does not exist."
+        message = "XS file does not exist."
         call fatal_error()
       end if
 
       ! Parse xs file
       call open_xmldoc(doc, filename)
 
-        ! Read in name field
-        call get_node_value(doc, "name", name)
-        call nuc % set_name(name)
+      ! Read in name field
+      call get_node_value(doc, "name", name)
+      call nuc % set_name(name)
+
+      ! Get size of grid
+      npts = get_arraysize_double(doc, "E")
+      allocate(E(npts))
+      allocate(xs_s(npts))
+      call get_node_array(doc, "E", E)
+      call get_node_array(doc, "xs_s", xs_s)
+
+      ! Set data in nuclide
+      call nuc % set_energy(E)
+      call nuc % set_xs_s(E)
 
       ! Close xs file
       call close_xmldoc(doc)
+
+      ! Deallocate arrays
+      deallocate(E)
+      deallocate(xs_s)
 
     end do
 
