@@ -1,6 +1,8 @@
 module input_xml
 
-  use output,        only: write_message, fatal_error, MAX_LINE_LEN, message
+  use constants,      only: MAX_WORD_LEN, MAX_LINE_LEN
+  use nuclide_class,  only: n_nuclides, nuclides, Nuclide
+  use output,         only: write_message, fatal_error, message
   use xml_interface
 
   implicit none
@@ -14,9 +16,15 @@ contains
 
   subroutine read_input_xml()
 
-    character(MAX_LINE_LEN) :: filename
+    character(len=MAX_LINE_LEN) :: filename
+    character(len=MAX_LINE_LEN) :: xs_file
+    integer :: i
     logical :: file_exists
     type(Node), pointer :: doc => null()
+    type(Node), pointer :: xs_doc => null()
+    type(Node), pointer :: node_nuc => null()
+    type(NodeList), pointer :: node_nuc_list => null()
+    type(Nuclide), pointer :: nuc => null()
 
     ! Display output message
     message = "Reading input XML file..."
@@ -30,12 +38,79 @@ contains
       call fatal_error()
     end if
 
-    ! Parse settings.xml file
+    ! Parse input.xml file
     call open_xmldoc(doc, filename)
 
-    ! Close settings XML file
+    ! Get list of nuclides
+    call get_node_list(doc, "nuclide", node_nuc_list)
+
+    ! Get the number of nuclides
+    n_nuclides = get_list_size(node_nuc_list)
+    allocate(nuclides(n_nuclides))
+
+    ! Loop around nuclides and read all input
+    do i = 1, n_nuclides
+
+      ! Get pointer to i-th nuclide
+      call get_list_item(node_nuc_list, i, node_nuc)
+      nuc => nuclides(i)
+
+      ! Check for scattering xs
+      if (check_for_node(node_nuc, "xs_scat")) then
+        call get_node_value(node_nuc, "xs_scat", xs_file)
+        call nuc % set_xs_s_path(xs_file)
+      else
+        message = "Missing scattering cross section in nuclide."
+        call fatal_error()
+      end if
+    end do
+
+    ! Close input XML file
     call close_xmldoc(doc)
 
+    ! Read in cross section data
+    call read_xs()
+
   end subroutine read_input_xml
+
+!===============================================================================
+! READ_XS
+!===============================================================================
+
+  subroutine read_xs()
+
+    character(len=MAX_LINE_LEN) :: filename
+    character(len=MAX_WORD_LEN) :: name
+    integer :: i
+    logical :: file_exists
+    type(Node), pointer :: doc => null()
+    type(Nuclide), pointer :: nuc => null()
+
+    ! Loop around nuclides
+    do i = 1, n_nuclides
+
+      nuc => nuclides(i)
+
+      ! Check if xs file exists 
+      filename = nuc % get_xs_s_path()
+      inquire(FILE=filename, EXIST=file_exists)
+      if (.not. file_exists) then
+        message = "Scattering XS file does not exist."
+        call fatal_error()
+      end if
+
+      ! Parse xs file
+      call open_xmldoc(doc, filename)
+
+        ! Read in name field
+        call get_node_value(doc, "name", name)
+        call nuc % set_name(name)
+
+      ! Close xs file
+      call close_xmldoc(doc)
+
+    end do
+
+  end subroutine read_xs
 
 end module input_xml
