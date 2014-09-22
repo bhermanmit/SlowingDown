@@ -5,5 +5,6 @@ module global
   save
 
   integer :: n_particles
+  real(8) :: micro_absxs
 
 end module global

@@ -33,6 +33,6 @@ module constants
        TWO          = 2.0_8
 
   ! Maximum number of allowed collisions
-  integer, parameter :: MAX_COLLISIONS = 5000
+  integer, parameter :: MAX_COLLISIONS = 1
 
 end module constants

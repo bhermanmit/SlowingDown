@@ -1,6 +1,7 @@
 module nuclide_class
 
   use constants,  only: MAX_WORD_LEN, MAX_LINE_LEN
+  use math,       only: linear_interp
 
   implicit none
   private
@@ -11,6 +12,7 @@ module nuclide_class
     ! Nuclide properties
     character(len=MAX_WORD_LEN) :: name ! name of nuclide
     character(len=MAX_LINE_LEN) :: xs_file ! cross section file
+    real(8) :: dens
     real(8), allocatable :: energy(:) ! energy array of nuclide cross section
     real(8), allocatable :: xs_s(:) ! scattering micro xs
     real(8), allocatable :: xs_a(:) ! absorption mircro xs
@@ -18,10 +20,15 @@ module nuclide_class
     ! Nuclide methods
     contains
       procedure, public :: clear => nuclide_clear
+      procedure, public :: get_density => nuclide_get_density
       procedure, public :: get_xs_file => nuclide_get_xs_file
+      procedure, public :: interp_xs_a => nuclide_interp_xs_a
+      procedure, public :: interp_xs_s => nuclide_interp_xs_s
+      procedure, public :: set_density => nuclide_set_density
       procedure, public :: set_energy => nuclide_set_energy
       procedure, public :: set_name => nuclide_set_name
       procedure, public :: set_xs_s => nuclide_set_xs_s
+      procedure, public :: set_xs_a => nuclide_set_xs_a
       procedure, public :: set_xs_file => nuclide_set_xs_file
       procedure, public :: write => nuclide_write
 
@@ -59,6 +66,60 @@ contains
     xs_file = self % xs_file
 
   end function nuclide_get_xs_file
+
+!===============================================================================
+! NUCLIDE_GET_DENSITY
+!===============================================================================
+
+  function nuclide_get_density(self) result(dens)
+
+    class(Nuclide) :: self
+    real(8) :: dens
+
+    dens = self % dens
+
+  end function nuclide_get_density
+
+!===============================================================================
+! NUCLIDE_INTERP_XS_A
+!===============================================================================
+
+  function nuclide_interp_xs_a(self, E) result(xs_a)
+
+    class(Nuclide) :: self
+    real(8) :: E
+    real(8) :: xs_a
+
+    xs_a = linear_interp(E, self % energy, self % xs_a)
+
+  end function nuclide_interp_xs_a
+
+!===============================================================================
+! NUCLIDE_INTERP_XS_S
+!===============================================================================
+
+  function nuclide_interp_xs_s(self, E) result(xs_s)
+
+    class(Nuclide) :: self
+    real(8) :: E
+    real(8) :: xs_s
+
+    xs_s = linear_interp(E, self % energy, self % xs_s)
+
+  end function nuclide_interp_xs_s
+
+!===============================================================================
+! NUCLIDE_SET_DENSITY
+!===============================================================================
+
+  subroutine nuclide_set_density(self, dens)
+
+    class(Nuclide), intent(inout) :: self
+    real(8), intent(in) :: dens
+
+    self % dens = dens
+
+  end subroutine nuclide_set_density
 
 !===============================================================================
 ! NUCLIDE_SET_ENERGY
@@ -101,6 +162,20 @@ contains
   end subroutine nuclide_set_xs_file
 
 !===============================================================================
+! NUCLIDE_SET_XS_A
+!===============================================================================
+
+  subroutine nuclide_set_xs_a(self, xs_a)
+
+    class(Nuclide), intent(inout) :: self
+    real(8), intent(in) :: xs_a(:)
+
+    allocate(self % xs_a(size(xs_a)))
+    self % xs_a = xs_a
+
+  end subroutine nuclide_set_xs_a
+
+!===============================================================================
 ! NUCLIDE_SET_XS_S
 !===============================================================================
 
@@ -124,6 +199,7 @@ contains
 
     print *, self % name
     print *, self % energy
+    print *, self % xs_a
     print *, self % xs_s
 
   end subroutine nuclide_write

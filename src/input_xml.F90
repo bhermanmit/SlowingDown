@@ -1,6 +1,6 @@
 module input_xml
 
-  use constants,      only: MAX_WORD_LEN, MAX_LINE_LEN
+  use constants,      only: MAX_WORD_LEN, MAX_LINE_LEN 
   use global
   use nuclide_class,  only: n_nuclides, nuclides, Nuclide
   use output,         only: write_message, fatal_error, message
@@ -23,6 +23,7 @@ contains
     character(len=MAX_LINE_LEN) :: xs_file
     integer :: i
     logical :: file_exists
+    real(8) :: density
     type(Node), pointer :: doc => null()
     type(Node), pointer :: node_nuc => null()
     type(NodeList), pointer :: node_nuc_list => null()
@@ -51,6 +52,14 @@ contains
       call fatal_error()
     end if
 
+    ! Get micro absorption cross section 
+    if (check_for_node(doc, "micro_absxs")) then
+      call get_node_value(doc, "micro_absxs", micro_absxs)
+    else
+      message = "Need to specify micro absorption xs in input."
+      call fatal_error()
+    end if
+
     ! Get list of nuclides
     call get_node_list(doc, "nuclide", node_nuc_list)
 
@@ -64,6 +73,15 @@ contains
       ! Get pointer to i-th nuclide
       call get_list_item(node_nuc_list, i, node_nuc)
       nuc => nuclides(i)
+
+      ! Check for density
+      if (check_for_node(node_nuc, "density")) then
+        call get_node_value(node_nuc, "density", density)
+        call nuc % set_density(density)
+      else
+        message = "Missing density for nuclide."
+        call fatal_error()
+      end if
 
       ! Check for scattering xs
       if (check_for_node(node_nuc, "xs_file")) then
@@ -95,6 +113,7 @@ contains
     integer :: npts
     logical :: file_exists
     real(8), allocatable :: E(:)
+    real(8), allocatable :: xs_a(:)
     real(8), allocatable :: xs_s(:)
     type(Node), pointer :: doc => null()
     type(Nuclide), pointer :: nuc => null()
@@ -123,12 +142,15 @@ contains
       npts = get_arraysize_double(doc, "E")
       allocate(E(npts))
       allocate(xs_s(npts))
+      allocate(xs_a(npts))
       call get_node_array(doc, "E", E)
       call get_node_array(doc, "xs_s", xs_s)
+      xs_a = micro_absxs
 
       ! Set data in nuclide
       call nuc % set_energy(E)
-      call nuc % set_xs_s(E)
+      call nuc % set_xs_s(xs_s)
+      call nuc % set_xs_a(xs_a)
 
       ! Close xs file
       call close_xmldoc(doc)
@@ -136,6 +158,7 @@ contains
       ! Deallocate arrays
       deallocate(E)
       deallocate(xs_s)
+      deallocate(xs_a)
 
     end do
 

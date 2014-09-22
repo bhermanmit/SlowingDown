@@ -1,9 +1,14 @@
 <?xml version="1.0"?>
 <input>
 
+  <!-- Run parameter -->
+  <n_particles> 10 </n_particles>
+
   <!-- Nuclide Information -->
   <nuclide name="H-1">
+    <density> 0.07 </density>
     <xs_file> ../data/h-1.xml </xs_file>
   </nuclide>
+  <micro_absxs> 3.5 </micro_absxs>
 
 </input>

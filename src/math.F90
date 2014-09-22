@@ -39,7 +39,7 @@ contains
     ! Perform linear interpolation
     slope = (yv(idx + 1) - yv(idx)) / (xv(idx + 1) - xv(idx))
     y = yv(idx) + slope*(x - xv(idx))
- 
+
   end function linear_interp
 
 !===============================================================================

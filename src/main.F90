@@ -16,7 +16,7 @@ program main
   type(Particle) :: p
 
   ! Inititalize
-  call initialize_run()
+  call initialize_run(p)
 
   ! Begin loop around particles
   PARTICLE_LOOP: do i = 1, n_particles
@@ -48,5 +48,6 @@ program main
 
   ! Finalize
   call finalize_run()
+  call p % clear()
 
 end program main
