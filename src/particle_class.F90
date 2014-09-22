@@ -13,10 +13,11 @@ module particle_class
     ! Particle properties
     integer :: n_collisions ! number of collisions
     logical :: alive ! is the particle alive?
+    real(8) :: dist ! distance particle traveled
     real(8) :: E ! energy
+    real(8) :: macro_total
     real(8) :: uvw(3) ! direction of travel
     real(8) :: xyz(3) ! spatial position
-    real(8) :: macro_total
     type(MacroXS) :: macro ! Current macroscopic xs
     type(MicroXS), allocatable :: micro(:) ! Current microscopic xs
 
@@ -26,8 +27,11 @@ module particle_class
       procedure, public :: add_micros => particle_add_micros
       procedure, public :: clear => particle_clear
       procedure, public :: get_alive => particle_get_alive
+      procedure, public :: get_distance => particle_get_distance
       procedure, public :: get_energy => particle_get_energy
+      procedure, public :: get_macro_total => particle_get_macro_total
       procedure, public :: initialize => particle_initialize
+      procedure, public :: set_distance => particle_set_distance
       procedure, public :: set_n_collisions => particle_set_n_collisions
       procedure, public :: start => particle_start
 
@@ -48,6 +52,8 @@ contains
     self % macro % xs_a = macroxs_a
     self % macro % xs_s = macroxs_s
     self % macro % xs_t = macroxs_a + macroxs_s
+
+    self % macro_total = self % macro % xs_t
 
   end subroutine particle_add_macros 
 
@@ -94,6 +100,19 @@ contains
   end function particle_get_alive
 
 !===============================================================================
+! PARTICLE_GET_DISTANCE
+!===============================================================================
+
+  function particle_get_distance(self) result(dist)
+
+    class(Particle) :: self
+    real(8) :: dist
+
+    dist = self % dist
+
+  end function particle_get_distance
+
+!===============================================================================
 ! PARTICLE_GET_ENERGY
 !===============================================================================
 
@@ -107,6 +126,19 @@ contains
   end function particle_get_energy
 
 !===============================================================================
+! PARTICLE_GET_MACRO_TOTAL
+!===============================================================================
+
+  function particle_get_macro_total(self) result(macro_total)
+
+    class(Particle) :: self
+    real(8) :: macro_total
+
+    macro_total = self % macro_total
+
+  end function particle_get_macro_total
+
+!===============================================================================
 ! PARTICLE_INITIALIZE
 !===============================================================================
 
@@ -118,6 +150,19 @@ contains
     allocate(self % micro(n))
 
   end subroutine particle_initialize
+
+!===============================================================================
+! PARTICLE_SET_DISTANCE
+!===============================================================================
+
+  subroutine particle_set_distance(self, dist)
+
+    class(Particle), intent(inout) :: self
+    real(8), intent(in) :: dist
+
+    self % dist = dist
+
+  end subroutine particle_set_distance
 
 !===============================================================================
 ! PARTICLE_SET_N_COLLISIONS
