@@ -113,6 +113,20 @@ contains
 
     type(Particle), intent(inout) :: p
 
+    integer :: reaction_type
+
+    ! Get the reaction type
+    reaction_type = p % get_reaction_type()
+
+    ! Perform collision physics for each reaction
+    select case (reaction_type)
+
+      case (REACTION_SCATTERED)
+
+      case (REACTION_ABSORBED)
+
+    end select
+
   end subroutine collision_physics
 
 end module physics
