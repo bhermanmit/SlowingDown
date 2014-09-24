@@ -35,4 +35,8 @@ module constants
   ! Maximum number of allowed collisions
   integer, parameter :: MAX_COLLISIONS = 1
 
+  ! Reaction that occurred
+  integer, parameter :: REACTION_ABSORBED = 1
+  integer, parameter :: REACTION_SCATTERED = 2
+
 end module constants

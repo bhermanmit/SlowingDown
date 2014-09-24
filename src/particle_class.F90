@@ -13,6 +13,7 @@ module particle_class
     ! Particle properties
     integer :: n_collisions ! number of collisions
     integer :: nuclide_index ! Index of collision nuclide in macro
+    integer :: reaction_type ! The reaction that occurred
     logical :: alive ! is the particle alive?
     real(8) :: dist ! distance particle traveled
     real(8) :: E ! energy
@@ -29,14 +30,18 @@ module particle_class
       procedure, public :: get_distance => particle_get_distance
       procedure, public :: get_energy => particle_get_energy
       procedure, public :: get_macro_total => particle_get_macro_total
+      procedure, public :: get_nuclide_macroxs_a => &
+                           particle_get_nuclide_macroxs_a
       procedure, public :: get_nuclide_macroxs_t => &
                            particle_get_nuclide_macroxs_t
       procedure, public :: get_nuclide_index => particle_get_nuclide_index
+      procedure, public :: get_reaction_type => particle_get_reaction_type
       procedure, public :: initialize => particle_initialize
       procedure, public :: set_distance => particle_set_distance
       procedure, public :: set_macro_total => particle_set_macro_total
       procedure, public :: set_nuclide_index => particle_set_nuclide_index
       procedure, public :: set_n_collisions => particle_set_n_collisions
+      procedure, public :: set_reaction_type => particle_set_reaction_type
       procedure, public :: start => particle_start
 
   end type Particle
@@ -125,6 +130,20 @@ contains
   end function particle_get_macro_total
 
 !===============================================================================
+! PARTICLE_GET_NUCLIDE_MACROXS_A
+!===============================================================================
+
+  function particle_get_nuclide_macroxs_a(self, i) result(macroxs_a)
+
+    class(Particle) :: self
+    integer :: i
+    real(8) :: macroxs_a
+
+    macroxs_a = self % macro(i) % xs_a
+
+  end function particle_get_nuclide_macroxs_a
+
+!===============================================================================
 ! PARTICLE_GET_NUCLIDE_MACROXS_T
 !===============================================================================
 
@@ -150,6 +169,19 @@ contains
     nuclide_index = self % nuclide_index
 
   end function particle_get_nuclide_index
+
+!===============================================================================
+! PARTICLE_GET_REACTION_TYPE
+!===============================================================================
+
+  function particle_get_reaction_type(self) result(reaction_type)
+
+    class(Particle) :: self
+    integer :: reaction_type
+
+    reaction_type = self % reaction_type
+
+  end function particle_get_reaction_type
 
 !===============================================================================
 ! PARTICLE_INITIALIZE
@@ -215,6 +247,19 @@ contains
     self % n_collisions = n_collisions
 
   end subroutine particle_set_n_collisions
+
+!===============================================================================
+! PARTICLE_SET_REACTION_TYPE
+!===============================================================================
+
+  subroutine particle_set_reaction_type(self, reaction_type)
+
+    class(Particle), intent(inout) :: self
+    integer, intent(in) :: reaction_type
+
+    self % reaction_type = reaction_type
+
+  end subroutine particle_set_reaction_type
 
 !===============================================================================
 ! PARTICLE_START samples particles' starting properties
