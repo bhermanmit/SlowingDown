@@ -6,8 +6,7 @@ program main
   use global,  only: n_particles
   use initialize,  only: initialize_run
   use particle_class,  only: Particle
-  use physics, only: collide
-  use tracking, only: transport
+  use physics, only: run_physics
 
   implicit none
 
@@ -30,11 +29,8 @@ program main
       ! Calculate cross sections
       call calculate_xs(p)
 
-      ! Transport particle
-      call transport(p)
-
-      ! Perform collision physics
-      call collide(p)
+      ! Perform transport and collision physics
+      call run_physics(p)
 
       ! Check if particle is still alive
       if (.not. p % get_alive()) then

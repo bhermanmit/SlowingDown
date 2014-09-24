@@ -21,6 +21,7 @@ contains
     real(8) :: E
     real(8) :: macroxs_a
     real(8) :: macroxs_s
+    real(8) :: macroxs_t
     real(8) :: microxs_a
     real(8) :: microxs_s
     type(Nuclide), pointer :: nuc => null()
@@ -29,8 +30,7 @@ contains
     E = p % get_energy()
 
     ! Reset macros
-    macroxs_a = ZERO
-    macroxs_s = ZERO
+    macroxs_t = ZERO
 
     ! Loop around nuclides
     do i = 1, n_nuclides
@@ -45,16 +45,19 @@ contains
       ! Get micro scattering cross section
       microxs_s = nuc % interp_xs_s(E)
 
-      ! Add micros to particle
-      call p % add_micros(i, microxs_a, microxs_s)
-
       ! Add macros
-      macroxs_a = macroxs_a + dens*microxs_a
-      macroxs_s = macroxs_s + dens*microxs_s
+      macroxs_a = dens*microxs_a
+      macroxs_s = dens*microxs_s
+
+      ! Add macros to particle
+      call p % add_macros(i, macroxs_a, macroxs_s)
+
+      ! Accumulate total macroscopic cross section
+      macroxs_t = macroxs_t + macroxs_a + macroxs_s
     end do
 
-    ! Set macros in particle
-    call p % add_macros(macroxs_a, macroxs_s)
+    ! Set macro total
+    call p % set_macro_total(macroxs_t)
 
   end subroutine calculate_xs
 

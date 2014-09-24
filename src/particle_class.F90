@@ -12,26 +12,30 @@ module particle_class
 
     ! Particle properties
     integer :: n_collisions ! number of collisions
+    integer :: nuclide_index ! Index of collision nuclide in macro
     logical :: alive ! is the particle alive?
     real(8) :: dist ! distance particle traveled
     real(8) :: E ! energy
     real(8) :: macro_total
     real(8) :: uvw(3) ! direction of travel
     real(8) :: xyz(3) ! spatial position
-    type(MacroXS) :: macro ! Current macroscopic xs
-    type(MicroXS), allocatable :: micro(:) ! Current microscopic xs
+    type(MacroXS), allocatable :: macro(:) ! Current macroscopic xs
 
     ! Particle methods
     contains
       procedure, public :: add_macros => particle_add_macros
-      procedure, public :: add_micros => particle_add_micros
       procedure, public :: clear => particle_clear
       procedure, public :: get_alive => particle_get_alive
       procedure, public :: get_distance => particle_get_distance
       procedure, public :: get_energy => particle_get_energy
       procedure, public :: get_macro_total => particle_get_macro_total
+      procedure, public :: get_nuclide_macroxs_t => &
+                           particle_get_nuclide_macroxs_t
+      procedure, public :: get_nuclide_index => particle_get_nuclide_index
       procedure, public :: initialize => particle_initialize
       procedure, public :: set_distance => particle_set_distance
+      procedure, public :: set_macro_total => particle_set_macro_total
+      procedure, public :: set_nuclide_index => particle_set_nuclide_index
       procedure, public :: set_n_collisions => particle_set_n_collisions
       procedure, public :: start => particle_start
 
@@ -43,36 +47,18 @@ contains
 ! PARTICLE_ADD_MACROS
 !===============================================================================
 
-  subroutine particle_add_macros(self, macroxs_a, macroxs_s)
-
-    class(Particle), intent(inout) :: self
-    real(8), intent(in) :: macroxs_a
-    real(8), intent(in) :: macroxs_s
-
-    self % macro % xs_a = macroxs_a
-    self % macro % xs_s = macroxs_s
-    self % macro % xs_t = macroxs_a + macroxs_s
-
-    self % macro_total = self % macro % xs_t
-
-  end subroutine particle_add_macros 
-
-!===============================================================================
-! PARTICLE_ADD_MICROS
-!===============================================================================
-
-  subroutine particle_add_micros(self, i, microxs_a, microxs_s)
+  subroutine particle_add_macros(self, i, macroxs_a, macroxs_s)
 
     class(Particle), intent(inout) :: self
     integer, intent(in) :: i
-    real(8), intent(in) :: microxs_a
-    real(8), intent(in) :: microxs_s
+    real(8), intent(in) :: macroxs_a
+    real(8), intent(in) :: macroxs_s
 
-    self % micro(i) % xs_a = microxs_a
-    self % micro(i) % xs_s = microxs_s
-    self % micro(i) % xs_t = microxs_a + microxs_s
+    self % macro(i) % xs_a = macroxs_a
+    self % macro(i) % xs_s = macroxs_s
+    self % macro(i) % xs_t = macroxs_a + macroxs_s
 
-  end subroutine particle_add_micros 
+  end subroutine particle_add_macros 
 
 !===============================================================================
 ! PARTICLE_CLEAR
@@ -82,7 +68,7 @@ contains
 
     class(Particle), intent(inout) :: self
 
-    if (allocated(self % micro)) deallocate(self % micro)
+    if (allocated(self % macro)) deallocate(self % macro)
 
   end subroutine particle_clear
 
@@ -139,6 +125,33 @@ contains
   end function particle_get_macro_total
 
 !===============================================================================
+! PARTICLE_GET_NUCLIDE_MACROXS_T
+!===============================================================================
+
+  function particle_get_nuclide_macroxs_t(self, i) result(macroxs_t)
+
+    class(Particle) :: self
+    integer :: i
+    real(8) :: macroxs_t
+
+    macroxs_t = self % macro(i) % xs_t
+
+  end function particle_get_nuclide_macroxs_t
+
+!===============================================================================
+! PARTICLE_GET_NUCLIDE_INDEX
+!===============================================================================
+
+  function particle_get_nuclide_index(self) result(nuclide_index)
+
+    class(Particle) :: self
+    integer :: nuclide_index
+
+    nuclide_index = self % nuclide_index
+
+  end function particle_get_nuclide_index
+
+!===============================================================================
 ! PARTICLE_INITIALIZE
 !===============================================================================
 
@@ -147,7 +160,7 @@ contains
     class(Particle), intent(inout) :: self
     integer, intent(in) :: n
 
-    allocate(self % micro(n))
+    allocate(self % macro(n))
 
   end subroutine particle_initialize
 
@@ -163,6 +176,32 @@ contains
     self % dist = dist
 
   end subroutine particle_set_distance
+
+!===============================================================================
+! PARTICLE_SET_MACRO_TOTAL
+!===============================================================================
+
+  subroutine particle_set_macro_total(self, macro_total)
+
+    class(Particle), intent(inout) :: self
+    real(8), intent(in) :: macro_total
+
+    self % macro_total = macro_total
+
+  end subroutine particle_set_macro_total
+
+!===============================================================================
+! PARTICLE_SET_NUCLIDE_INDEX
+!===============================================================================
+
+  subroutine particle_set_nuclide_index(self, nuclide_index)
+
+    class(Particle), intent(inout) :: self
+    integer, intent(in) :: nuclide_index
+
+    self % nuclide_index = nuclide_index
+
+  end subroutine particle_set_nuclide_index
 
 !===============================================================================
 ! PARTICLE_SET_N_COLLISIONS
