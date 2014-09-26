@@ -140,7 +140,7 @@ contains
         nuclide_idx = p % get_nuclide_index()
 
         ! Get pre-collision direction
-        uvw = p % get_uvw()
+        uvw0 = p % get_uvw()
 
         ! Get atomic weight
         A = nuclides(nuclide_idx) % get_A()
@@ -159,9 +159,9 @@ contains
 
         ! Transform cosines relative to incoming flight path
         uvw(1) = coszt*uvw0(1) + (s1*(uvw0(1)*uvw0(3)*cos(phi) - &
-             uvw(2)*sin(phi))/s2)
+             uvw0(2)*sin(phi))/s2)
         uvw(2) = coszt*uvw0(2) + (s1*(uvw0(2)*uvw0(3)*cos(phi) + &
-             uvw(1)*sin(phi))/s2)
+             uvw0(1)*sin(phi))/s2)
         uvw(3) = coszt*uvw0(3) - s1*s2*cos(phi)
 
         ! Calculate outgoing energy
