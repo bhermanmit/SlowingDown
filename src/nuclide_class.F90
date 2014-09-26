@@ -12,7 +12,8 @@ module nuclide_class
     ! Nuclide properties
     character(len=MAX_WORD_LEN) :: name ! name of nuclide
     character(len=MAX_LINE_LEN) :: xs_file ! cross section file
-    real(8) :: dens
+    real(8) :: A ! atomic weight
+    real(8) :: dens ! number density
     real(8), allocatable :: energy(:) ! energy array of nuclide cross section
     real(8), allocatable :: xs_s(:) ! scattering micro xs
     real(8), allocatable :: xs_a(:) ! absorption mircro xs
@@ -20,10 +21,12 @@ module nuclide_class
     ! Nuclide methods
     contains
       procedure, public :: clear => nuclide_clear
+      procedure, public :: get_A => nuclide_get_A
       procedure, public :: get_density => nuclide_get_density
       procedure, public :: get_xs_file => nuclide_get_xs_file
       procedure, public :: interp_xs_a => nuclide_interp_xs_a
       procedure, public :: interp_xs_s => nuclide_interp_xs_s
+      procedure, public :: set_A => nuclide_set_A
       procedure, public :: set_density => nuclide_set_density
       procedure, public :: set_energy => nuclide_set_energy
       procedure, public :: set_name => nuclide_set_name
@@ -53,6 +56,19 @@ contains
     if(allocated(self % xs_a)) deallocate(self % xs_a)
 
   end subroutine nuclide_clear
+
+!===============================================================================
+! NUCLIDE_GET_A
+!===============================================================================
+
+  function nuclide_get_A(self) result(A)
+
+    class(Nuclide) :: self
+    real(8) :: A
+
+    A = self % A
+
+  end function nuclide_get_A
 
 !===============================================================================
 ! NUCLIDE_GET_XS_FILE
@@ -107,6 +123,19 @@ contains
     xs_s = linear_interp(E, self % energy, self % xs_s)
 
   end function nuclide_interp_xs_s
+
+!===============================================================================
+! NUCLIDE_SET_A
+!===============================================================================
+
+  subroutine nuclide_set_A(self, A)
+
+    class(Nuclide), intent(inout) :: self
+    real(8), intent(in) :: A
+
+    self % A = A
+
+  end subroutine nuclide_set_A
 
 !===============================================================================
 ! NUCLIDE_SET_DENSITY

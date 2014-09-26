@@ -36,12 +36,16 @@ module particle_class
                            particle_get_nuclide_macroxs_t
       procedure, public :: get_nuclide_index => particle_get_nuclide_index
       procedure, public :: get_reaction_type => particle_get_reaction_type
+      procedure, public :: get_uvw => particle_get_uvw
       procedure, public :: initialize => particle_initialize
+      procedure, public :: set_alive => particle_set_alive
       procedure, public :: set_distance => particle_set_distance
+      procedure, public :: set_energy => particle_set_energy
       procedure, public :: set_macro_total => particle_set_macro_total
       procedure, public :: set_nuclide_index => particle_set_nuclide_index
       procedure, public :: set_n_collisions => particle_set_n_collisions
       procedure, public :: set_reaction_type => particle_set_reaction_type
+      procedure, public :: set_uvw => particle_set_uvw
       procedure, public :: start => particle_start
 
   end type Particle
@@ -184,6 +188,19 @@ contains
   end function particle_get_reaction_type
 
 !===============================================================================
+! PARTICLE_GET_UVW
+!===============================================================================
+
+  function particle_get_uvw(self) result(uvw)
+
+    class(Particle) :: self
+    real(8) :: uvw(3)
+
+    uvw = self % uvw
+
+  end function particle_get_uvw
+
+!===============================================================================
 ! PARTICLE_INITIALIZE
 !===============================================================================
 
@@ -197,6 +214,19 @@ contains
   end subroutine particle_initialize
 
 !===============================================================================
+! PARTICLE_SET_ALIVE
+!===============================================================================
+
+  subroutine particle_set_alive(self, alive)
+
+    class(Particle), intent(inout) :: self
+    logical, intent(in) :: alive
+
+    self % alive = alive
+
+  end subroutine particle_set_alive
+
+!===============================================================================
 ! PARTICLE_SET_DISTANCE
 !===============================================================================
 
@@ -208,6 +238,19 @@ contains
     self % dist = dist
 
   end subroutine particle_set_distance
+
+!===============================================================================
+! PARTICLE_SET_ENERGY
+!===============================================================================
+
+  subroutine particle_set_energy(self, energy)
+
+    class(Particle), intent(inout) :: self
+    real(8), intent(in) :: energy
+
+    self % E = energy 
+
+  end subroutine particle_set_energy
 
 !===============================================================================
 ! PARTICLE_SET_MACRO_TOTAL
@@ -260,6 +303,19 @@ contains
     self % reaction_type = reaction_type
 
   end subroutine particle_set_reaction_type
+
+!===============================================================================
+! PARTICLE_SET_UVW
+!===============================================================================
+
+  subroutine particle_set_uvw(self, uvw)
+
+    class(Particle), intent(inout) :: self
+    real(8), intent(in) :: uvw(3)
+
+    self % uvw = uvw
+
+  end subroutine particle_set_uvw
 
 !===============================================================================
 ! PARTICLE_START samples particles' starting properties
