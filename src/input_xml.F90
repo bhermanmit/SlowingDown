@@ -95,6 +95,10 @@ contains
     end do
 
     ! Get tally information
+    if (check_for_node(doc, "tally")) then
+      call get_node_ptr(doc, "tally", node_tal)
+      if (check_for_node(node_tal, "type")) then
+        call 
 
     ! Close input XML file
     call close_xmldoc(doc)
