@@ -26,6 +26,7 @@ contains
     real(8) :: density
     type(Node), pointer :: doc => null()
     type(Node), pointer :: node_nuc => null()
+    type(Node), pointer :: node_tal => null()
     type(NodeList), pointer :: node_nuc_list => null()
     type(Nuclide), pointer :: nuc => null()
 
@@ -92,6 +93,8 @@ contains
         call fatal_error()
       end if
     end do
+
+    ! Get tally information
 
     ! Close input XML file
     call close_xmldoc(doc)
