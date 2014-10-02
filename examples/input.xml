@@ -11,4 +11,7 @@
   </nuclide>
   <micro_absxs> 3.5 </micro_absxs>
 
+  <!-- Tally Information -->
+  <tally type="equal-lethargy" nbins="100" />
+
 </input>

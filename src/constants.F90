@@ -33,10 +33,17 @@ module constants
        TWO          = 2.0_8
 
   ! Maximum number of allowed collisions
-  integer, parameter :: MAX_COLLISIONS = 1
+  integer, parameter :: MAX_COLLISIONS = 1000
 
   ! Reaction that occurred
   integer, parameter :: REACTION_ABSORBED = 1
   integer, parameter :: REACTION_SCATTERED = 2
+
+  ! Max and min energy
+  real(8), parameter :: MAX_ENERGY = 20.0
+  real(8), parameter :: MIN_ENERGY = 1.e-11
+
+  ! Tally grid types
+  integer, parameter :: EQUAL_LETHARGY = 0
 
 end module constants

@@ -1,9 +1,10 @@
 module input_xml
 
-  use constants,      only: MAX_WORD_LEN, MAX_LINE_LEN 
+  use constants,      only: MAX_WORD_LEN, MAX_LINE_LEN, EQUAL_LETHARGY
   use global
   use nuclide_class,  only: n_nuclides, nuclides, Nuclide
   use output,         only: write_message, fatal_error, message
+  use tally_class,    only: flux_tally, migration_tally
   use xml_interface
 
   implicit none
@@ -20,8 +21,10 @@ contains
   subroutine read_input_xml()
 
     character(len=MAX_LINE_LEN) :: filename
+    character(len=MAX_WORD_LEN) :: tally_type
     character(len=MAX_LINE_LEN) :: xs_file
     integer :: i
+    integer :: tally_nbins
     logical :: file_exists
     real(8) :: density
     type(Node), pointer :: doc => null()
@@ -97,8 +100,35 @@ contains
     ! Get tally information
     if (check_for_node(doc, "tally")) then
       call get_node_ptr(doc, "tally", node_tal)
+
       if (check_for_node(node_tal, "type")) then
-        call 
+        call get_node_value(node_tal, "type", tally_type)
+        select case (tally_type)
+        case ('equal-lethargy')
+          call flux_tally % set_type(EQUAL_LETHARGY)
+          call migration_tally % set_type(EQUAL_LETHARGY)
+          if (check_for_node(node_tal, "nbins")) then
+            call get_node_value(node_tal, "nbins", tally_nbins)
+            call flux_tally % set_nbins(tally_nbins)
+            call migration_tally % set_nbins(tally_nbins)
+          else
+            message = 'Must specify tally bins.'
+            call fatal_error()
+          end if
+
+        case default
+          message = 'Only equal-lethargy allowed.'
+          call fatal_error()
+        end select
+      else
+        message = 'Need to specify tally type.'
+        call fatal_error() 
+      end if
+
+    else
+      message = 'Must specify tally information.'
+      call fatal_error()
+    endif
 
     ! Close input XML file
     call close_xmldoc(doc)
