@@ -19,13 +19,13 @@ program main
 
   ! Begin loop around particles
   PARTICLE_LOOP: do i = 1, n_particles
-print *, 'PARTICLE', i
+
     ! Get initial particle information
     call p % start()
 
     ! Start collision loop
     COLLISION_LOOP: do j = 1, MAX_COLLISIONS
-print *, 'COLLISION', j, p % get_energy()
+
       ! Calculate cross sections
       call calculate_xs(p)
 

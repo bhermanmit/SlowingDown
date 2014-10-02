@@ -1,6 +1,8 @@
 module tally_class
 
-  use constants,  only: MAX_WORD_LEN, MAX_ENERGY, MIN_ENERGY, EQUAL_LETHARGY
+  use constants,  only: MAX_WORD_LEN, MAX_ENERGY, MIN_ENERGY, EQUAL_LETHARGY, &
+                        ZERO
+  use math,       only: binary_search
 
   implicit none
   private
@@ -13,15 +15,37 @@ module tally_class
     real(8), allocatable :: flux_s1(:)
     real(8), allocatable :: flux_s2(:)
     contains
+      procedure, public :: add_flux_score => tally_add_flux_score
       procedure, public :: clear => tally_clear
       procedure, public :: initialize => tally_initialize
       procedure, public :: set_nbins => tally_set_nbins
       procedure, public :: set_type => tally_set_type
+      procedure, public :: write => tally_write
   end type Tally
 
   type(Tally), public, save :: tal
 
 contains
+
+!===============================================================================
+! TALLY_ADD_FLUX_SCORE
+!===============================================================================
+
+  subroutine tally_add_flux_score(self, energy, score)
+
+    class(Tally) :: self
+    integer :: group
+    real(8) :: energy
+    real(8) :: score
+
+    ! Get energy group
+    group = binary_search(self % bins, self % nbins+1, energy)
+
+    ! Save tally
+    self % flux_s1(group) = self % flux_s1(group) + score
+    self % flux_s2(group) = self % flux_s2(group) + score**2
+
+  end subroutine tally_add_flux_score
 
 !===============================================================================
 ! TALLY_CLEAR
@@ -77,7 +101,9 @@ contains
     ! allocate scoring bins
     allocate(self % flux_s1(nbins))
     allocate(self % flux_s2(nbins))
-print *, self % bins
+    self % flux_s1 = ZERO
+    self % flux_s2 = ZERO
+
   end subroutine tally_initialize
 
 !===============================================================================
@@ -105,5 +131,24 @@ print *, self % bins
     self % type = type
 
   end subroutine tally_set_type
+
+!===============================================================================
+! TALLY_WRITE
+!===============================================================================
+
+  subroutine tally_write(self)
+
+    class(Tally), intent(inout) :: self
+
+    integer :: i
+
+    ! Write out flux
+    open(FILE="flux.out", UNIT=100, ACTION="write")
+    do i = 1, self % nbins
+      write(100, *) (self % bins(i) + self % bins(i+1))/2.0, self % flux_s1(i)
+    end do
+    close(100)
+
+  end subroutine tally_write
 
 end module tally_class

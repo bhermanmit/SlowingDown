@@ -5,6 +5,7 @@ module physics
   use particle_class,  only: Particle
   use nuclide_class,   only: n_nuclides, nuclides
   use random,          only: prn
+  use tally_class,     only: tal
 
   implicit none
   private
@@ -49,6 +50,9 @@ contains
 
     ! Save distance particle traveled
     call p % set_distance(dist)
+
+    ! Save tally
+    call tal % add_flux_score(p % get_energy(), dist)
 
   end subroutine sample_pathlength
 
@@ -127,6 +131,7 @@ contains
     real(8) :: s1
     real(8) :: s2
     real(8) :: term1
+    real(8) :: mubar
 
     ! Get the reaction type
     reaction_type = p % get_reaction_type()
@@ -153,23 +158,23 @@ contains
         term1 = A**2 + ONE + TWO*A*coszz
 
         ! Transform scattering polar angle into LAB
-        coszt = (ONE + A*coszz)/sqrt(term1)
-        s1 = sqrt(ONE - coszt**2)
-        s2 = sqrt(ONE - uvw0(1)**2)
+!       coszt = (ONE + A*coszz)/sqrt(term1)
+!       s1 = sqrt(ONE - coszt**2)
+!       s2 = sqrt(ONE - uvw0(1)**2)
 
-        ! Transform cosines relative to incoming flight path
-        uvw(1) = coszt*uvw0(1) + (s1*(uvw0(1)*uvw0(3)*cos(phi) - &
-             uvw0(2)*sin(phi))/s2)
-        uvw(2) = coszt*uvw0(2) + (s1*(uvw0(2)*uvw0(3)*cos(phi) + &
-             uvw0(1)*sin(phi))/s2)
-        uvw(3) = coszt*uvw0(3) - s1*s2*cos(phi)
+!       ! Transform cosines relative to incoming flight path
+!       uvw(1) = coszt*uvw0(1) + (s1*(uvw0(1)*uvw0(3)*cos(phi) - &
+!            uvw0(2)*sin(phi))/s2)
+!       uvw(2) = coszt*uvw0(2) + (s1*(uvw0(2)*uvw0(3)*cos(phi) + &
+!            uvw0(1)*sin(phi))/s2)
+!       uvw(3) = coszt*uvw0(3) - s1*s2*cos(phi)
 
         ! Calculate outgoing energy
         Ein = p % get_energy()
         Eout = Ein*term1/(A + ONE)**2
 
         ! Set new direction and energy of particle
-        call p % set_uvw(uvw)
+!       call p % set_uvw(uvw)
         call p  % set_energy(Eout)
   
       case (REACTION_ABSORBED)

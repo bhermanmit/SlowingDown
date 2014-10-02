@@ -37,7 +37,7 @@ if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
   # GNU Fortran compiler options
   set(f90flags  "-cpp -std=f2008 -fbacktrace")
   if(debug)
-    set(f90flags  "-g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,overflow,underflow ${f90flags}")
+    set(f90flags  "-g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,overflow,underflow,zero ${f90flags}")
     set(ldflags   "-g")
   endif()
   if(profile)

@@ -1,6 +1,7 @@
 module finalize
 
   use nuclide_class,  only: nuclides, n_nuclides
+  use tally_class, only: tal
 
   implicit none
 
@@ -13,6 +14,9 @@ contains
   subroutine finalize_run()
 
     integer :: i
+
+    ! Write tallies
+    call tal % write()
 
     ! Free nuclide memory
     do i = 1, n_nuclides
