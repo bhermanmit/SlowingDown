@@ -4,7 +4,7 @@ module input_xml
   use global
   use nuclide_class,  only: n_nuclides, nuclides, Nuclide
   use output,         only: write_message, fatal_error, message
-  use tally_class,    only: flux_tally, migration_tally
+  use tally_class,    only: tal 
   use xml_interface
 
   implicit none
@@ -105,12 +105,10 @@ contains
         call get_node_value(node_tal, "type", tally_type)
         select case (tally_type)
         case ('equal-lethargy')
-          call flux_tally % set_type(EQUAL_LETHARGY)
-          call migration_tally % set_type(EQUAL_LETHARGY)
+          call tal % set_type(EQUAL_LETHARGY)
           if (check_for_node(node_tal, "nbins")) then
             call get_node_value(node_tal, "nbins", tally_nbins)
-            call flux_tally % set_nbins(tally_nbins)
-            call migration_tally % set_nbins(tally_nbins)
+            call tal % set_nbins(tally_nbins)
           else
             message = 'Must specify tally bins.'
             call fatal_error()
@@ -129,6 +127,9 @@ contains
       message = 'Must specify tally information.'
       call fatal_error()
     endif
+
+    ! Initialize tally
+    call tal % initialize()
 
     ! Close input XML file
     call close_xmldoc(doc)

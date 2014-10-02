@@ -1,6 +1,6 @@
 program main
 
-  use constants,  only: MAX_COLLISIONS
+  use constants,  only: MAX_COLLISIONS, MIN_ENERGY
   use cross_section,  only: calculate_xs
   use finalize,  only: finalize_run
   use global,  only: n_particles
@@ -25,12 +25,15 @@ print *, 'PARTICLE', i
 
     ! Start collision loop
     COLLISION_LOOP: do j = 1, MAX_COLLISIONS
-print *, 'COLLISION', j
+print *, 'COLLISION', j, p % get_energy()
       ! Calculate cross sections
       call calculate_xs(p)
 
       ! Perform transport and collision physics
       call run_physics(p)
+
+      ! Kill neutron if below min energy
+      if (p % get_energy() <= MIN_ENERGY) call p % set_alive(.false.)
 
       ! Check if particle is still alive
       if (.not. p % get_alive()) then

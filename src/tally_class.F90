@@ -10,8 +10,8 @@ module tally_class
     integer :: nbins
     integer :: type
     real(8), allocatable :: bins(:)
-    real(8), allocatable :: s1(:,:)
-    real(8), allocatable :: s2(:,:)
+    real(8), allocatable :: flux_s1(:)
+    real(8), allocatable :: flux_s2(:)
     contains
       procedure, public :: clear => tally_clear
       procedure, public :: initialize => tally_initialize
@@ -19,8 +19,7 @@ module tally_class
       procedure, public :: set_type => tally_set_type
   end type Tally
 
-  type(Tally), public, save :: flux_tally
-  type(Tally), public, save :: migration_tally
+  type(Tally), public, save :: tal
 
 contains
 
@@ -33,8 +32,8 @@ contains
     class(Tally), intent(inout) :: self
 
     if (allocated(self % bins)) deallocate(self % bins)
-    if (allocated(self % s1)) deallocate(self % s1)
-    if (allocated(self % s2)) deallocate(self % s2)
+    if (allocated(self % flux_s1)) deallocate(self % flux_s1)
+    if (allocated(self % flux_s2)) deallocate(self % flux_s2)
 
   end subroutine tally_clear
 
@@ -42,19 +41,15 @@ contains
 ! TALLY_INITIALIZE
 !===============================================================================
 
-  subroutine tally_initialize(self, score)
+  subroutine tally_initialize(self)
 
     class(Tally), intent(inout) :: self
-    character(len=MAX_WORD_LEN) :: score
 
     integer :: i
     integer :: nbins
     real(8) :: u_low
     real(8) :: u_hi
     real(8) :: u_width
-
-    ! set score
-    self % score = score
 
     ! check for equal lethargy bins
     if (self % type == EQUAL_LETHARGY) then
@@ -74,20 +69,15 @@ contains
 
     ! Set bins
     self % bins(1) = 0.0
-    do i = 1, nbins
-      self % bins(i+1) = log(MAX_ENERGY/(u_hi - real(i,8)*u_width))
+    do i = 1, nbins-1
+      self % bins(i+1) = MAX_ENERGY/exp(u_hi - real(i,8)*u_width)
     end do
+    self % bins(nbins+1) = MAX_ENERGY
 
     ! allocate scoring bins
-    select case (score)
-    case ('flux')
-      allocate(self % s1(nbins, 1))
-      allocate(self % s2(nbins, 1))
-    case ('migration')
-      allocate(self % s1(nbins, nbins))
-      allocate(self % s2(nbins, nbins))
-    end select
-
+    allocate(self % flux_s1(nbins))
+    allocate(self % flux_s2(nbins))
+print *, self % bins
   end subroutine tally_initialize
 
 !===============================================================================
