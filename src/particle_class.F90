@@ -1,6 +1,6 @@
 module particle_class 
 
-  use constants,  only: ONE, TWO, PI
+  use constants,  only: ONE, TWO, PI, MAX_ENERGY, MIN_ENERGY
   use cross_section_header 
   use random,     only: prn
 
@@ -342,6 +342,10 @@ contains
 
     ! Starting energy
     self % E = watt_spectrum()
+
+    ! Make sure it is under 20.0 MeV and above 1.e-11 MeV
+    self % E = max(self % E, MIN_ENERGY)
+    self % E = min(self % E, MAX_ENERGY)
 
     ! Particle is alive
     self % alive = .true.

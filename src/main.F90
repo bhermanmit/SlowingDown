@@ -20,6 +20,9 @@ program main
   ! Begin loop around particles
   PARTICLE_LOOP: do i = 1, n_particles
 
+    ! Print particle id in increments of 1000
+    if (mod(i, 100000) == 0) print *, 'At Particle:', i
+
     ! Get initial particle information
     call p % start()
 
