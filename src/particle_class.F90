@@ -326,6 +326,7 @@ contains
     class(Particle) :: self
 
     real(8) :: cosz ! cosine of z
+    real(8) :: mu   ! polar angle
     real(8) :: phi  ! azimuthal angle
     real(8) :: sinz ! sine of z
 
@@ -333,12 +334,11 @@ contains
     self % xyz = (/0.0, 0.0, 0.0/)
 
     ! Starting direction
-    cosz = ONE - TWO*prn() ! z-cosine
-    sinz = sqrt(ONE - cosz**2)
     phi = TWO*PI*prn()
-    self % uvw(1) = sinz*cos(phi)
-    self % uvw(2) = sinz*sin(phi)
-    self % uvw(3) = cosz
+    mu = TWO*prn() - ONE
+    self % uvw(1) = mu
+    self % uvw(2) = sqrt(ONE - mu**2) * cos(phi)
+    self % uvw(3) = sqrt(ONE - mu**2) * sin(phi)
 
     ! Starting energy
     self % E = watt_spectrum()

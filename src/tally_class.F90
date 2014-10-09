@@ -17,6 +17,7 @@ module tally_class
     contains
       procedure, public :: add_flux_score => tally_add_flux_score
       procedure, public :: clear => tally_clear
+      procedure, public :: get_energy_bin => tally_get_energy_bin
       procedure, public :: initialize => tally_initialize
       procedure, public :: set_nbins => tally_set_nbins
       procedure, public :: set_type => tally_set_type
@@ -39,7 +40,7 @@ contains
     real(8) :: score
 
     ! Get energy group
-    group = binary_search(self % bins, self % nbins+1, energy)
+    group = self % get_energy_bin(energy)
 
     ! Save tally
     self % flux_s1(group) = self % flux_s1(group) + score
@@ -60,6 +61,21 @@ contains
     if (allocated(self % flux_s2)) deallocate(self % flux_s2)
 
   end subroutine tally_clear
+
+!===============================================================================
+! TALLY_GET_ENERGY_BIN
+!===============================================================================
+
+  function tally_get_energy_bin(self, energy) result(energy_bin)
+
+    class(Tally) :: self
+    real(8) :: energy
+    real(8) :: energy_bin
+    
+    ! Get energy group
+    energy_bin = binary_search(self % bins, self % nbins+1, energy)
+
+  end function tally_get_energy_bin
 
 !===============================================================================
 ! TALLY_INITIALIZE

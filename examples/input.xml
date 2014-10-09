@@ -9,7 +9,7 @@
     <density> 0.07 </density>
     <xs_file> ../data/h-1.xml </xs_file>
   </nuclide>
-  <micro_absxs> 0.0003 </micro_absxs>
+  <micro_absxs> 3.5 </micro_absxs>
 
   <!-- Tally Information -->
   <tally type="equal-lethargy" nbins="100" />
