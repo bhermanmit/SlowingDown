@@ -70,7 +70,7 @@ contains
 
     class(Tally) :: self
     real(8) :: energy
-    real(8) :: energy_bin
+    integer :: energy_bin
     
     ! Get energy group
     energy_bin = binary_search(self % bins, self % nbins+1, energy)

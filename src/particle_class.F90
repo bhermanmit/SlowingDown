@@ -1,8 +1,9 @@
 module particle_class 
 
-  use constants,  only: ONE, TWO, PI, MAX_ENERGY, MIN_ENERGY
+  use constants,   only: ONE, TWO, PI, MAX_ENERGY, MIN_ENERGY
   use cross_section_header 
-  use random,     only: prn
+  use random,      only: prn
+  use tally_class, only: tal
 
   implicit none
 
@@ -11,6 +12,7 @@ module particle_class
     private
 
     ! Particle properties
+    integer :: energy_group ! energy group in tally structure
     integer :: n_collisions ! number of collisions
     integer :: nuclide_index ! Index of collision nuclide in macro
     integer :: reaction_type ! The reaction that occurred
@@ -29,6 +31,7 @@ module particle_class
       procedure, public :: get_alive => particle_get_alive
       procedure, public :: get_distance => particle_get_distance
       procedure, public :: get_energy => particle_get_energy
+      procedure, public :: get_energy_group => particle_get_energy_group
       procedure, public :: get_macro_total => particle_get_macro_total
       procedure, public :: get_nuclide_macroxs_a => &
                            particle_get_nuclide_macroxs_a
@@ -38,9 +41,11 @@ module particle_class
       procedure, public :: get_reaction_type => particle_get_reaction_type
       procedure, public :: get_uvw => particle_get_uvw
       procedure, public :: initialize => particle_initialize
+      procedure, public :: lookup_energy_group => particle_lookup_energy_group
       procedure, public :: set_alive => particle_set_alive
       procedure, public :: set_distance => particle_set_distance
       procedure, public :: set_energy => particle_set_energy
+      procedure, public :: set_energy_group => particle_set_energy_group
       procedure, public :: set_macro_total => particle_set_macro_total
       procedure, public :: set_nuclide_index => particle_set_nuclide_index
       procedure, public :: set_n_collisions => particle_set_n_collisions
@@ -119,6 +124,19 @@ contains
     energy = self % E
 
   end function particle_get_energy
+
+!===============================================================================
+! PARTICLE_GET_ENERGY_GROUP
+!===============================================================================
+
+  function particle_get_energy_group(self) result(energy_group)
+
+    class(Particle) :: self
+    integer :: energy_group
+
+    energy_group = self % energy_group
+
+  end function particle_get_energy_group
 
 !===============================================================================
 ! PARTICLE_GET_MACRO_TOTAL
@@ -214,6 +232,19 @@ contains
   end subroutine particle_initialize
 
 !===============================================================================
+! PARTICLE_LOOKUP_ENERGY_GROUP
+!===============================================================================
+
+  function particle_lookup_energy_group(self) result(energy_group)
+
+    class(Particle), intent(inout) :: self
+    integer :: energy_group
+
+    energy_group = tal % get_energy_bin(self % E)
+
+  end function particle_lookup_energy_group
+
+!===============================================================================
 ! PARTICLE_SET_ALIVE
 !===============================================================================
 
@@ -251,6 +282,19 @@ contains
     self % E = energy 
 
   end subroutine particle_set_energy
+
+!===============================================================================
+! PARTICLE_SET_ENERGY_GROUP
+!===============================================================================
+
+  subroutine particle_set_energy_group(self, energy_group)
+
+    class(Particle), intent(inout) :: self
+    integer, intent(in) :: energy_group
+
+    self % energy_group = energy_group
+
+  end subroutine particle_set_energy_group
 
 !===============================================================================
 ! PARTICLE_SET_MACRO_TOTAL
@@ -346,6 +390,9 @@ contains
     ! Make sure it is under 20.0 MeV and above 1.e-11 MeV
     self % E = max(self % E, MIN_ENERGY)
     self % E = min(self % E, MAX_ENERGY)
+
+    ! Get neutrons energy group in tally structure
+    self % energy_group = self % lookup_energy_group()
 
     ! Particle is alive
     self % alive = .true.
