@@ -2,7 +2,7 @@
 <input>
 
   <!-- Run parameter -->
-  <n_particles> 10000000 </n_particles>
+  <n_particles> 100000000 </n_particles>
 
   <!-- Nuclide Information -->
   <nuclide name="H-1">

@@ -1,7 +1,7 @@
 module physics
 
   use constants,       only: ZERO, REACTION_ABSORBED, REACTION_SCATTERED, &
-                             ONE, TWO, PI
+                             ONE, TWO, PI, MASS_NEUTRON
   use particle_class,  only: Particle
   use nuclide_class,   only: n_nuclides, nuclides
   use random,          only: prn
@@ -121,17 +121,18 @@ contains
     integer :: nuclide_idx
     integer :: reaction_type
     real(8) :: A
-    real(8) :: coszz
-    real(8) :: coszt
-    real(8) :: Ein
-    real(8) :: Eout
-    real(8) :: uvw(3)
-    real(8) :: uvw0(3)
-    real(8) :: phi
-    real(8) :: s1
-    real(8) :: s2
-    real(8) :: term1
-    real(8) :: mubar
+    real(8) :: E_in
+    real(8) :: E_out
+    real(8) :: mass_t
+    real(8) :: mu_cm
+    real(8) :: speed_in
+    real(8) :: speed_in_cm
+    real(8) :: uvw_out(3)
+    real(8) :: uvw_in(3)
+    real(8) :: uvw_in_cm(3)
+    real(8) :: v_cm(3)
+    real(8) :: v_in(3)
+    real(8) :: v_in_cm(3)
 
     ! Get the reaction type
     reaction_type = p % get_reaction_type()
@@ -144,38 +145,36 @@ contains
         ! Get collision nuclide
         nuclide_idx = p % get_nuclide_index()
 
-        ! Get pre-collision direction
-        uvw0 = p % get_uvw()
+        ! Get pre-collision direction and energy
+        uvw_in = p % get_uvw()
+        E_in = p % get_energy()
 
-        ! Get atomic weight
-        A = nuclides(nuclide_idx) % get_A()
+        ! Get atomic mass 
+        mass_t = nuclides(nuclide_idx) % get_mass()
 
-        ! Sample isotropic azimuthal angle in COM
-        phi = 2.0*PI*prn()
+        ! Calculate atomic weight ratio
+        A = mass_t/MASS_NEUTRON
 
-        ! Sample isotropic polar angle in COM
-        coszz = ONE - TWO*prn()
-        term1 = A**2 + ONE + TWO*A*coszz
+        ! Calculate speed
+        speed_in = sqrt(TWO*E_in/MASS_NEUTRON)
 
-        ! Transform scattering polar angle into LAB
-!       coszt = (ONE + A*coszz)/sqrt(term1)
-!       s1 = sqrt(ONE - coszt**2)
-!       s2 = sqrt(ONE - uvw0(1)**2)
+        ! Calculate velocity
+        v_in = speed_in*uvw_in
 
-!       ! Transform cosines relative to incoming flight path
-!       uvw(1) = coszt*uvw0(1) + (s1*(uvw0(1)*uvw0(3)*cos(phi) - &
-!            uvw0(2)*sin(phi))/s2)
-!       uvw(2) = coszt*uvw0(2) + (s1*(uvw0(2)*uvw0(3)*cos(phi) + &
-!            uvw0(1)*sin(phi))/s2)
-!       uvw(3) = coszt*uvw0(3) - s1*s2*cos(phi)
+        ! Calculate center of mass velocity
+        v_cm = v_in/(A + ONE)
 
-        ! Calculate outgoing energy
-        Ein = p % get_energy()
-        Eout = Ein*term1/(A + ONE)**2
+        ! Calculate neutron velocity in CM
+        v_in_cm = v_in - v_cm
 
-        ! Set new direction and energy of particle
-!       call p % set_uvw(uvw)
-        call p  % set_energy(Eout)
+        ! Calculate speed of neutron in CM
+        speed_in_cm = sqrt(dot_product(v_in_cm, v_in_cm))
+
+        ! Calculate direction of motion in CM
+        uvw_in_cm = v_in_cm / speed_in_cm
+
+        ! Sample isotropic mu in CM
+        mu_cm = TWO*prn() - ONE 
   
       case (REACTION_ABSORBED)
 

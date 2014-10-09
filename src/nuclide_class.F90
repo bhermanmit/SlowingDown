@@ -12,7 +12,7 @@ module nuclide_class
     ! Nuclide properties
     character(len=MAX_WORD_LEN) :: name ! name of nuclide
     character(len=MAX_LINE_LEN) :: xs_file ! cross section file
-    real(8) :: A ! atomic weight
+    real(8) :: mass ! atomic mass
     real(8) :: dens ! number density
     real(8), allocatable :: energy(:) ! energy array of nuclide cross section
     real(8), allocatable :: xs_s(:) ! scattering micro xs
@@ -21,14 +21,14 @@ module nuclide_class
     ! Nuclide methods
     contains
       procedure, public :: clear => nuclide_clear
-      procedure, public :: get_A => nuclide_get_A
       procedure, public :: get_density => nuclide_get_density
+      procedure, public :: get_mass => nuclide_get_mass
       procedure, public :: get_xs_file => nuclide_get_xs_file
       procedure, public :: interp_xs_a => nuclide_interp_xs_a
       procedure, public :: interp_xs_s => nuclide_interp_xs_s
-      procedure, public :: set_A => nuclide_set_A
       procedure, public :: set_density => nuclide_set_density
       procedure, public :: set_energy => nuclide_set_energy
+      procedure, public :: set_mass => nuclide_set_mass
       procedure, public :: set_name => nuclide_set_name
       procedure, public :: set_xs_s => nuclide_set_xs_s
       procedure, public :: set_xs_a => nuclide_set_xs_a
@@ -58,17 +58,17 @@ contains
   end subroutine nuclide_clear
 
 !===============================================================================
-! NUCLIDE_GET_A
+! NUCLIDE_GET_MASS
 !===============================================================================
 
-  function nuclide_get_A(self) result(A)
+  function nuclide_get_mass(self) result(mass)
 
     class(Nuclide) :: self
-    real(8) :: A
+    real(8) :: mass
 
-    A = self % A
+    mass = self % mass
 
-  end function nuclide_get_A
+  end function nuclide_get_mass
 
 !===============================================================================
 ! NUCLIDE_GET_XS_FILE
@@ -125,19 +125,6 @@ contains
   end function nuclide_interp_xs_s
 
 !===============================================================================
-! NUCLIDE_SET_A
-!===============================================================================
-
-  subroutine nuclide_set_A(self, A)
-
-    class(Nuclide), intent(inout) :: self
-    real(8), intent(in) :: A
-
-    self % A = A
-
-  end subroutine nuclide_set_A
-
-!===============================================================================
 ! NUCLIDE_SET_DENSITY
 !===============================================================================
 
@@ -163,6 +150,19 @@ contains
     self % energy = energy
 
   end subroutine nuclide_set_energy
+
+!===============================================================================
+! NUCLIDE_SET_MASS
+!===============================================================================
+
+  subroutine nuclide_set_mass(self, mass)
+
+    class(Nuclide), intent(inout) :: self
+    real(8), intent(in) :: mass 
+
+    self % mass = mass
+
+  end subroutine nuclide_set_mass
 
 !===============================================================================
 ! NUCLIDE_SET_NAME

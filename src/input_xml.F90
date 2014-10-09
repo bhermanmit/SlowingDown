@@ -150,7 +150,7 @@ contains
     integer :: i
     integer :: npts
     logical :: file_exists
-    real(8) :: A
+    real(8) :: mass
     real(8), allocatable :: E(:)
     real(8), allocatable :: xs_a(:)
     real(8), allocatable :: xs_s(:)
@@ -178,8 +178,8 @@ contains
       call nuc % set_name(name)
 
       ! Read in atomic weight 
-      call get_node_value(doc, "A", A)
-      call nuc % set_A(A)
+      call get_node_value(doc, "mass", mass)
+      call nuc % set_mass(mass)
 
       ! Get size of grid
       npts = get_arraysize_double(doc, "E")
