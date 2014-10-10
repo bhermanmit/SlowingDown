@@ -14,8 +14,11 @@ module tally_class
     real(8), allocatable :: bins(:)
     real(8), allocatable :: flux_s1(:)
     real(8), allocatable :: flux_s2(:)
+    real(8), allocatable :: removal_s1(:)
+    real(8), allocatable :: removal_s2(:)
     contains
       procedure, public :: add_flux_score => tally_add_flux_score
+      procedure, public :: add_removal_score => tally_add_removal_score
       procedure, public :: clear => tally_clear
       procedure, public :: get_energy_bin => tally_get_energy_bin
       procedure, public :: get_nbins => tally_get_nbins
@@ -33,21 +36,43 @@ contains
 ! TALLY_ADD_FLUX_SCORE
 !===============================================================================
 
-  subroutine tally_add_flux_score(self, energy, score)
+  subroutine tally_add_flux_score(self, group, score)
 
-    class(Tally) :: self
-    integer :: group
-    real(8) :: energy
-    real(8) :: score
+    class(Tally), intent(inout) :: self
+    integer, intent(in) :: group
+    real(8), intent(in) :: score
 
-    ! Get energy group
-    group = self % get_energy_bin(energy)
+    integer :: bin
+
+    ! Change group to bin
+    bin = self % get_nbins() - group + 1
 
     ! Save tally
-    self % flux_s1(group) = self % flux_s1(group) + score
-    self % flux_s2(group) = self % flux_s2(group) + score**2
+    self % flux_s1(bin) = self % flux_s1(bin) + score
+    self % flux_s2(bin) = self % flux_s2(bin) + score**2
 
   end subroutine tally_add_flux_score
+
+!===============================================================================
+! TALLY_ADD_REMOVAL_SCORE
+!===============================================================================
+
+  subroutine tally_add_removal_score(self, group, score)
+
+    class(Tally), intent(inout) :: self
+    integer, intent(in) :: group
+    real(8), intent(in) :: score
+
+    integer :: bin
+
+    ! Change group to bin
+    bin = self % get_nbins() - group + 1
+
+    ! Save tally
+    self % removal_s1(bin) = self % removal_s1(bin) + score
+    self % removal_s2(bin) = self % removal_s2(bin) + score**2
+
+  end subroutine tally_add_removal_score
 
 !===============================================================================
 ! TALLY_CLEAR
@@ -60,6 +85,8 @@ contains
     if (allocated(self % bins)) deallocate(self % bins)
     if (allocated(self % flux_s1)) deallocate(self % flux_s1)
     if (allocated(self % flux_s2)) deallocate(self % flux_s2)
+    if (allocated(self % removal_s1)) deallocate(self % removal_s1)
+    if (allocated(self % removal_s2)) deallocate(self % removal_s2)
 
   end subroutine tally_clear
 
@@ -131,8 +158,12 @@ contains
     ! allocate scoring bins
     allocate(self % flux_s1(nbins))
     allocate(self % flux_s2(nbins))
+    allocate(self % removal_s1(nbins))
+    allocate(self % removal_s2(nbins))
     self % flux_s1 = ZERO
     self % flux_s2 = ZERO
+    self % removal_s1 = ZERO
+    self % removal_s2 = ZERO
 
   end subroutine tally_initialize
 
@@ -178,6 +209,14 @@ contains
       write(100, *) (self % bins(i) + self % bins(i+1))/2.0, self % flux_s1(i)
     end do
     close(100)
+
+    ! Write out removal xs 
+    open(FILE="removal.out", UNIT=101, ACTION="write")
+    do i = 1, self % nbins
+      write(101, *) (self % bins(i) + self % bins(i+1))/2.0, &
+                     self % removal_s1(i) / self % flux_s1(i)
+    end do
+    close(101)
 
   end subroutine tally_write
 

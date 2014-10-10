@@ -1,6 +1,7 @@
 module particle_class 
 
-  use constants,   only: ONE, TWO, PI, MAX_ENERGY, MIN_ENERGY
+  use constants,   only: ONE, TWO, PI, MAX_ENERGY, MIN_ENERGY, &
+                         REACTION_SCATTERED
   use cross_section_header 
   use random,      only: prn
   use tally_class, only: tal
@@ -23,6 +24,7 @@ module particle_class
     real(8) :: E_last ! energy
     real(8) :: macro_total
     real(8) :: uvw(3) ! direction of travel
+    real(8) :: weight ! statistical weight
     real(8) :: xyz(3) ! spatial position
     type(MacroXS), allocatable :: macro(:) ! Current macroscopic xs
 
@@ -35,6 +37,8 @@ module particle_class
       procedure, public :: get_distance => particle_get_distance
       procedure, public :: get_energy => particle_get_energy
       procedure, public :: get_energy_group => particle_get_energy_group
+      procedure, public :: get_energy_group_last => &
+                           particle_get_energy_group_last
       procedure, public :: get_macro_total => particle_get_macro_total
       procedure, public :: get_nuclide_macroxs_a => &
                            particle_get_nuclide_macroxs_a
@@ -43,6 +47,7 @@ module particle_class
       procedure, public :: get_nuclide_index => particle_get_nuclide_index
       procedure, public :: get_reaction_type => particle_get_reaction_type
       procedure, public :: get_uvw => particle_get_uvw
+      procedure, public :: get_weight => particle_get_weight
       procedure, public :: initialize => particle_initialize
       procedure, public :: lookup_energy_group => particle_lookup_energy_group
       procedure, public :: set_alive => particle_set_alive
@@ -54,6 +59,7 @@ module particle_class
       procedure, public :: set_n_collisions => particle_set_n_collisions
       procedure, public :: set_reaction_type => particle_set_reaction_type
       procedure, public :: set_uvw => particle_set_uvw
+      procedure, public :: set_weight => particle_set_weight
       procedure, public :: start => particle_start
       procedure, public :: tally => particle_tally
 
@@ -156,6 +162,19 @@ contains
   end function particle_get_energy_group
 
 !===============================================================================
+! PARTICLE_GET_ENERGY_GROUP_LAST
+!===============================================================================
+
+  function particle_get_energy_group_last(self) result(energy_group)
+
+    class(Particle) :: self
+    integer :: energy_group
+
+    energy_group = self % energy_group_last
+
+  end function particle_get_energy_group_last
+
+!===============================================================================
 ! PARTICLE_GET_MACRO_TOTAL
 !===============================================================================
 
@@ -234,6 +253,19 @@ contains
     uvw = self % uvw
 
   end function particle_get_uvw
+
+!===============================================================================
+! PARTICLE_GET_WEIGHT
+!===============================================================================
+
+  function particle_get_weight(self) result(weight)
+
+    class(Particle) :: self
+    real(8) :: weight
+
+    weight = self % weight
+
+  end function particle_get_weight
 
 !===============================================================================
 ! PARTICLE_INITIALIZE
@@ -387,6 +419,19 @@ contains
   end subroutine particle_set_uvw
 
 !===============================================================================
+! PARTICLE_SET_WEIGHT
+!===============================================================================
+
+  subroutine particle_set_weight(self, weight)
+
+    class(Particle), intent(inout) :: self
+    real(8), intent(in) :: weight
+
+    self % weight = weight
+
+  end subroutine particle_set_weight
+
+!===============================================================================
 ! PARTICLE_START samples particles' starting properties
 !===============================================================================
 
@@ -398,6 +443,9 @@ contains
     real(8) :: mu   ! polar angle
     real(8) :: phi  ! azimuthal angle
     real(8) :: sinz ! sine of z
+
+    ! Starting weight
+    call self % set_weight(ONE)
 
     ! Starting location
     self % xyz = (/0.0, 0.0, 0.0/)
@@ -432,8 +480,26 @@ contains
 
     class(Particle), intent(inout) :: self
 
-    ! Save tally
-    call tal % add_flux_score(self % get_energy(), self % get_distance())
+    integer :: energy_group
+    integer :: energy_group_last
+    real(8) :: weight
+
+    ! Extract data
+    weight = self % get_weight()
+    energy_group = self % get_energy_group()
+    energy_group_last = self % get_energy_group_last()
+
+    ! Record flux tally at each collision, uses pre-collision energy group
+    call tal % add_flux_score(energy_group_last, weight/self % get_macro_total())
+
+    ! Check for removal via absorption or out-scatter
+    if (self % get_reaction_type() == REACTION_SCATTERED) then
+      if (energy_group /= energy_group_last) then
+          call tal % add_removal_score(energy_group_last, weight)
+      end if
+    else
+      call tal % add_removal_score(energy_group_last, weight)
+    end if 
 
   end subroutine particle_tally
 
