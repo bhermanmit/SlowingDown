@@ -29,11 +29,17 @@ program main
     ! Start collision loop
     COLLISION_LOOP: do j = 1, MAX_COLLISIONS
 
+      ! Start the collision
+      call p % begin_collision()
+
       ! Calculate cross sections
       call calculate_xs(p)
 
       ! Perform transport and collision physics
       call run_physics(p)
+
+      ! Tally results
+      call p % tally()
 
       ! Kill neutron if below min energy
       if (p % get_energy() <= MIN_ENERGY) call p % set_alive(.false.)

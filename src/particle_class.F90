@@ -13,12 +13,14 @@ module particle_class
 
     ! Particle properties
     integer :: energy_group ! energy group in tally structure
+    integer :: energy_group_last ! energy group in tally structure
     integer :: n_collisions ! number of collisions
     integer :: nuclide_index ! Index of collision nuclide in macro
     integer :: reaction_type ! The reaction that occurred
     logical :: alive ! is the particle alive?
     real(8) :: dist ! distance particle traveled
     real(8) :: E ! energy
+    real(8) :: E_last ! energy
     real(8) :: macro_total
     real(8) :: uvw(3) ! direction of travel
     real(8) :: xyz(3) ! spatial position
@@ -27,6 +29,7 @@ module particle_class
     ! Particle methods
     contains
       procedure, public :: add_macros => particle_add_macros
+      procedure, public :: begin_collision => particle_begin_collision
       procedure, public :: clear => particle_clear
       procedure, public :: get_alive => particle_get_alive
       procedure, public :: get_distance => particle_get_distance
@@ -52,6 +55,7 @@ module particle_class
       procedure, public :: set_reaction_type => particle_set_reaction_type
       procedure, public :: set_uvw => particle_set_uvw
       procedure, public :: start => particle_start
+      procedure, public :: tally => particle_tally
 
   end type Particle
 
@@ -73,6 +77,19 @@ contains
     self % macro(i) % xs_t = macroxs_a + macroxs_s
 
   end subroutine particle_add_macros 
+
+!===============================================================================
+! PARTICLE_BEGIN_COLLISION
+!===============================================================================
+
+  subroutine particle_begin_collision(self)
+
+    class(Particle), intent(inout) :: self
+
+    self % E_last = self % E
+    self % energy_group_last = self % energy_group
+
+  end subroutine particle_begin_collision
 
 !===============================================================================
 ! PARTICLE_CLEAR
@@ -240,7 +257,11 @@ contains
     class(Particle), intent(inout) :: self
     integer :: energy_group
 
+    ! get the energy bin
     energy_group = tal % get_energy_bin(self % E)
+
+    ! convert energy bin to energy group
+    energy_group = tal % get_nbins() - energy_group + 1
 
   end function particle_lookup_energy_group
 
@@ -279,7 +300,11 @@ contains
     class(Particle), intent(inout) :: self
     real(8), intent(in) :: energy
 
+    ! set the energy
     self % E = energy 
+
+    ! set the energy group
+    call self % set_energy_group(self % lookup_energy_group())
 
   end subroutine particle_set_energy
 
@@ -398,6 +423,19 @@ contains
     self % alive = .true.
 
   end subroutine particle_start
+
+!===============================================================================
+! PARTICLE_TALLY
+!===============================================================================
+
+  subroutine particle_tally(self)
+
+    class(Particle), intent(inout) :: self
+
+    ! Save tally
+    call tal % add_flux_score(self % get_energy(), self % get_distance())
+
+  end subroutine particle_tally
 
 !===============================================================================
 ! WATT_SPECTRUM samples the outgoing energy from a Watt energy-dependent fission

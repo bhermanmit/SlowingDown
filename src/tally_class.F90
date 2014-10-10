@@ -18,6 +18,7 @@ module tally_class
       procedure, public :: add_flux_score => tally_add_flux_score
       procedure, public :: clear => tally_clear
       procedure, public :: get_energy_bin => tally_get_energy_bin
+      procedure, public :: get_nbins => tally_get_nbins
       procedure, public :: initialize => tally_initialize
       procedure, public :: set_nbins => tally_set_nbins
       procedure, public :: set_type => tally_set_type
@@ -76,6 +77,19 @@ contains
     energy_bin = binary_search(self % bins, self % nbins+1, energy)
 
   end function tally_get_energy_bin
+
+!===============================================================================
+! TALLY_GET_NBINS
+!===============================================================================
+
+  function tally_get_nbins(self) result(nbins)
+
+    class(Tally) :: self
+    integer :: nbins
+    
+    nbins = self % nbins
+
+  end function tally_get_nbins
 
 !===============================================================================
 ! TALLY_INITIALIZE

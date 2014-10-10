@@ -51,9 +51,6 @@ contains
     ! Save distance particle traveled
     call p % set_distance(dist)
 
-    ! Save tally
-    call tal % add_flux_score(p % get_energy(), dist)
-
   end subroutine sample_pathlength
 
 !===============================================================================
