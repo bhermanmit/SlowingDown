@@ -51,6 +51,9 @@ contains
     ! Save distance particle traveled
     call p % set_distance(dist)
 
+    ! Move particle
+    call p % move()
+
   end subroutine sample_pathlength
 
 !===============================================================================

@@ -26,16 +26,19 @@ module particle_class
     real(8) :: uvw(3) ! direction of travel
     real(8) :: weight ! statistical weight
     real(8) :: xyz(3) ! spatial position
+    real(8) :: xyz_start(3) ! starting spatial position for tallies
     type(MacroXS), allocatable :: macro(:) ! Current macroscopic xs
 
     ! Particle methods
     contains
       procedure, public :: add_macros => particle_add_macros
       procedure, public :: begin_collision => particle_begin_collision
+      procedure, public :: calc_displacement => particle_calc_displacement
       procedure, public :: clear => particle_clear
       procedure, public :: get_alive => particle_get_alive
       procedure, public :: get_distance => particle_get_distance
       procedure, public :: get_energy => particle_get_energy
+      procedure, public :: get_energy_last => particle_get_energy_last
       procedure, public :: get_energy_group => particle_get_energy_group
       procedure, public :: get_energy_group_last => &
                            particle_get_energy_group_last
@@ -50,6 +53,8 @@ module particle_class
       procedure, public :: get_weight => particle_get_weight
       procedure, public :: initialize => particle_initialize
       procedure, public :: lookup_energy_group => particle_lookup_energy_group
+      procedure, public :: mark_position => particle_mark_position
+      procedure, public :: move => particle_move
       procedure, public :: set_alive => particle_set_alive
       procedure, public :: set_distance => particle_set_distance
       procedure, public :: set_energy => particle_set_energy
@@ -96,6 +101,19 @@ contains
     self % energy_group_last = self % energy_group
 
   end subroutine particle_begin_collision
+
+!===============================================================================
+! PARTICLE_CALC_DISPLACEMENT
+!===============================================================================
+
+  function particle_calc_displacement(self) result(displacement)
+
+    class(Particle) :: self
+    real(8) :: displacement
+
+    displacement = sqrt(sum((self % xyz - self % xyz_start)**2))
+
+  end function particle_calc_displacement
 
 !===============================================================================
 ! PARTICLE_CLEAR
@@ -147,6 +165,19 @@ contains
     energy = self % E
 
   end function particle_get_energy
+
+!===============================================================================
+! PARTICLE_GET_ENERGY_LAST
+!===============================================================================
+
+  function particle_get_energy_last(self) result(energy)
+
+    class(Particle) :: self
+    real(8) :: energy
+
+    energy = self % E_last
+
+  end function particle_get_energy_last
 
 !===============================================================================
 ! PARTICLE_GET_ENERGY_GROUP
@@ -296,6 +327,30 @@ contains
     energy_group = tal % get_nbins() - energy_group + 1
 
   end function particle_lookup_energy_group
+
+!===============================================================================
+! PARTICLE_MARK_POSITION
+!===============================================================================
+
+  subroutine particle_mark_position(self)
+
+    class(Particle), intent(inout) :: self
+
+    self % xyz_start = self % xyz
+
+  end subroutine particle_mark_position
+
+!===============================================================================
+! PARTICLE_MOVE
+!===============================================================================
+
+  subroutine particle_move(self)
+
+    class(Particle), intent(inout) :: self
+
+    self % xyz = self % xyz + self % dist * self % uvw
+
+  end subroutine particle_move
 
 !===============================================================================
 ! PARTICLE_SET_ALIVE
@@ -449,6 +504,8 @@ contains
 
     ! Starting location
     self % xyz = (/0.0, 0.0, 0.0/)
+    call self % mark_position() ! sets this as initial reference position for
+                                ! displacement calculation for migration
 
     ! Starting direction
     phi = TWO*PI*prn()
@@ -482,6 +539,8 @@ contains
 
     integer :: energy_group
     integer :: energy_group_last
+    integer :: i
+    real(8) :: displacement
     real(8) :: weight
 
     ! Extract data
@@ -492,14 +551,22 @@ contains
     ! Record flux tally at each collision, uses pre-collision energy group
     call tal % add_flux_score(energy_group_last, weight/self % get_macro_total())
 
+    ! Record cumulative migration area (assumes only downscatter)
+    displacement = self % calc_displacement()
+    do i = energy_group_last, energy_group - 1
+        call tal % add_migration_score(i, weight*displacement)
+    end do
+
     ! Check for removal via absorption or out-scatter
     if (self % get_reaction_type() == REACTION_SCATTERED) then
       if (energy_group /= energy_group_last) then
           call tal % add_removal_score(energy_group_last, weight)
+          call self % mark_position() ! sets a new reference position for disp
       end if
     else
       call tal % add_removal_score(energy_group_last, weight)
     end if 
+
 
   end subroutine particle_tally
 
