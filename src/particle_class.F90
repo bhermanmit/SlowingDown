@@ -553,15 +553,32 @@ contains
 
     ! Record cumulative migration area (assumes only downscatter)
     displacement = self % calc_displacement()
-    do i = energy_group_last, energy_group - 1
+    if (self % get_reaction_type() == REACTION_SCATTERED) then
+
+      ! for a scattering out of group h to group g, we
+      ! tally the crow flight distance from group g all the
+      ! way to the energy group just above. The neutron position
+      ! is then marked as the reference position for the next
+      ! collision 
+      do i = energy_group_last, energy_group - 1
         call tal % add_migration_score(i, weight*displacement)
-    end do
+        call tal % add_kill_score(i, weight)
+      end do
+      call self % mark_position()
+    else
+
+      ! for absorption, we tally in the absorbed groups and all the
+      ! groups below in energy
+      do i = energy_group, tal % get_nbins()
+        call tal % add_migration_score(i, weight*displacement)
+        call tal % add_kill_score(i, weight)
+      end do
+    end if
 
     ! Check for removal via absorption or out-scatter
     if (self % get_reaction_type() == REACTION_SCATTERED) then
       if (energy_group /= energy_group_last) then
           call tal % add_removal_score(energy_group_last, weight)
-          call self % mark_position() ! sets a new reference position for disp
       end if
     else
       call tal % add_removal_score(energy_group_last, weight)

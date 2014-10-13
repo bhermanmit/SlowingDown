@@ -14,12 +14,15 @@ module tally_class
     real(8), allocatable :: bins(:)
     real(8), allocatable :: flux_s1(:)
     real(8), allocatable :: flux_s2(:)
-    real(8), allocatable :: removal_s1(:)
-    real(8), allocatable :: removal_s2(:)
+    real(8), allocatable :: kill_s1(:)
+    real(8), allocatable :: kill_s2(:)
     real(8), allocatable :: migration_s1(:)
     real(8), allocatable :: migration_s2(:)
+    real(8), allocatable :: removal_s1(:)
+    real(8), allocatable :: removal_s2(:)
     contains
       procedure, public :: add_flux_score => tally_add_flux_score
+      procedure, public :: add_kill_score => tally_add_kill_score
       procedure, public :: add_migration_score => tally_add_migration_score
       procedure, public :: add_removal_score => tally_add_removal_score
       procedure, public :: clear => tally_clear
@@ -57,10 +60,10 @@ contains
   end subroutine tally_add_flux_score
 
 !===============================================================================
-! TALLY_ADD_REMOVAL_SCORE
+! TALLY_ADD_KILL_SCORE
 !===============================================================================
 
-  subroutine tally_add_removal_score(self, group, score)
+  subroutine tally_add_kill_score(self, group, score)
 
     class(Tally), intent(inout) :: self
     integer, intent(in) :: group
@@ -72,10 +75,10 @@ contains
     bin = self % get_nbins() - group + 1
 
     ! Save tally
-    self % removal_s1(bin) = self % removal_s1(bin) + score
-    self % removal_s2(bin) = self % removal_s2(bin) + score**2
+    self % kill_s1(bin) = self % kill_s1(bin) + score
+    self % kill_s2(bin) = self % kill_s2(bin) + score**2
 
-  end subroutine tally_add_removal_score
+  end subroutine tally_add_kill_score
 
 !===============================================================================
 ! TALLY_ADD_MIGRATION_SCORE
@@ -99,6 +102,27 @@ contains
   end subroutine tally_add_migration_score
 
 !===============================================================================
+! TALLY_ADD_REMOVAL_SCORE
+!===============================================================================
+
+  subroutine tally_add_removal_score(self, group, score)
+
+    class(Tally), intent(inout) :: self
+    integer, intent(in) :: group
+    real(8), intent(in) :: score
+
+    integer :: bin
+
+    ! Change group to bin
+    bin = self % get_nbins() - group + 1
+
+    ! Save tally
+    self % removal_s1(bin) = self % removal_s1(bin) + score
+    self % removal_s2(bin) = self % removal_s2(bin) + score**2
+
+  end subroutine tally_add_removal_score
+
+!===============================================================================
 ! TALLY_CLEAR
 !===============================================================================
 
@@ -109,10 +133,12 @@ contains
     if (allocated(self % bins)) deallocate(self % bins)
     if (allocated(self % flux_s1)) deallocate(self % flux_s1)
     if (allocated(self % flux_s2)) deallocate(self % flux_s2)
-    if (allocated(self % removal_s1)) deallocate(self % removal_s1)
-    if (allocated(self % removal_s2)) deallocate(self % removal_s2)
+    if (allocated(self % kill_s1)) deallocate(self % kill_s1)
+    if (allocated(self % kill_s2)) deallocate(self % kill_s2)
     if (allocated(self % migration_s1)) deallocate(self % migration_s1)
     if (allocated(self % migration_s2)) deallocate(self % migration_s2)
+    if (allocated(self % removal_s1)) deallocate(self % removal_s1)
+    if (allocated(self % removal_s2)) deallocate(self % removal_s2)
 
   end subroutine tally_clear
 
@@ -184,16 +210,20 @@ contains
     ! allocate scoring bins
     allocate(self % flux_s1(nbins))
     allocate(self % flux_s2(nbins))
-    allocate(self % removal_s1(nbins))
-    allocate(self % removal_s2(nbins))
+    allocate(self % kill_s1(nbins))
+    allocate(self % kill_s2(nbins))
     allocate(self % migration_s1(nbins))
     allocate(self % migration_s2(nbins))
+    allocate(self % removal_s1(nbins))
+    allocate(self % removal_s2(nbins))
     self % flux_s1 = ZERO
     self % flux_s2 = ZERO
-    self % removal_s1 = ZERO
-    self % removal_s2 = ZERO
+    self % kill_s1 = ZERO
+    self % kill_s2 = ZERO
     self % migration_s1 = ZERO
     self % migration_s2 = ZERO
+    self % removal_s1 = ZERO
+    self % removal_s2 = ZERO
 
   end subroutine tally_initialize
 
@@ -248,13 +278,21 @@ contains
     end do
     close(101)
 
-    ! Write out removal xs 
+    ! Write out migration rate
     open(FILE="migration.out", UNIT=102, ACTION="write")
     do i = 1, self % nbins
       write(102, *) (self % bins(i) + self % bins(i+1))/2.0, &
                      self % migration_s1(i)
     end do
     close(102)
+
+    ! Write out kill score 
+    open(FILE="kill.out", UNIT=103, ACTION="write")
+    do i = 1, self % nbins
+      write(103, *) (self % bins(i) + self % bins(i+1))/2.0, &
+                     self % kill_s1(i)
+    end do
+    close(103)
 
   end subroutine tally_write
 
