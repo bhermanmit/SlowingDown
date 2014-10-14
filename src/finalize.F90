@@ -23,6 +23,9 @@ contains
       call nuclides(i) % clear()
     end do
 
+    ! Free tally memory
+    call tal % clear()
+
   end subroutine finalize_run
 
 end module finalize

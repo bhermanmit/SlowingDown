@@ -263,34 +263,38 @@ contains
 
     integer :: i
 
+    ! Write out energy pts
+    open(FILE="energy.out", UNIT=99, ACTION="write")
+    do i = 1, self % nbins
+      write(99, *) (self % bins(i) + self % bins(i+1))/2.0
+    end do
+    close(99)
+
     ! Write out flux
     open(FILE="flux.out", UNIT=100, ACTION="write")
     do i = 1, self % nbins
-      write(100, *) (self % bins(i) + self % bins(i+1))/2.0, self % flux_s1(i)
+      write(100, *) self % flux_s1(i)
     end do
     close(100)
 
-    ! Write out removal xs 
-    open(FILE="removal.out", UNIT=101, ACTION="write")
+    ! Write out removal rate
+    open(FILE="removal_rate.out", UNIT=101, ACTION="write")
     do i = 1, self % nbins
-      write(101, *) (self % bins(i) + self % bins(i+1))/2.0, &
-                     self % removal_s1(i) / self % flux_s1(i)
+      write(101, *) self % removal_s1(i)
     end do
     close(101)
 
     ! Write out migration rate
-    open(FILE="migration.out", UNIT=102, ACTION="write")
+    open(FILE="migration_rate.out", UNIT=102, ACTION="write")
     do i = 1, self % nbins
-      write(102, *) (self % bins(i) + self % bins(i+1))/2.0, &
-                     self % migration_s1(i)
+      write(102, *) self % migration_s1(i)
     end do
     close(102)
 
     ! Write out kill score 
-    open(FILE="kill.out", UNIT=103, ACTION="write")
+    open(FILE="kill_rate.out", UNIT=103, ACTION="write")
     do i = 1, self % nbins
-      write(103, *) (self % bins(i) + self % bins(i+1))/2.0, &
-                     self % kill_s1(i)
+      write(103, *) self % kill_s1(i)
     end do
     close(103)
 
