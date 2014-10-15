@@ -29,11 +29,19 @@ with open('removal_rate.out', 'r') as fh:
     lines = fh.read().splitlines()
 removal_rate = np.array([float(x) for x in lines])
 
+# Get total rate
+with open('total_rate.out', 'r') as fh:
+    lines = fh.read().splitlines()
+total_rate = np.array([float(x) for x in lines])
+
 # Calculate cumulate migration area
 mig_area = 1.0/6.0*mig_rate/kill_rate
 
 # Calculate removal xs
 removal_xs = removal_rate / flux
+
+# Calculate total xs
+total_xs = total_rate/flux
 
 # Calculate cumulative diffusion coefficient
 difftog = mig_area*removal_xs
@@ -115,5 +123,13 @@ diff_ax.set_xscale('log')
 diff_ax.set_ylabel('Diffusion coefficient [cm]')
 diff_ax.set_xlabel('Energy [MeV]')
 diff_ax.plot(energy, diff)
+
+total_plt = plt.figure()
+total_ax = plt.gca()
+total_ax.set_yscale('log')
+total_ax.set_xscale('log')
+total_ax.set_ylabel('Total XS [1/cm]')
+total_ax.set_xlabel('Energy [MeV]')
+total_ax.plot(energy, total_xs)
 
 plt.show()

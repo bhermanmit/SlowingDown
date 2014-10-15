@@ -551,6 +551,9 @@ contains
     ! Record flux tally at each collision, uses pre-collision energy group
     call tal % add_flux_score(energy_group_last, weight/self % get_macro_total())
 
+    ! Record total reaction rate tally
+    call tal % add_total_score(energy_group_last, weight)
+
     ! Record cumulative migration area (assumes only downscatter)
     displacement = self % calc_displacement()
     if (self % get_reaction_type() == REACTION_SCATTERED) then

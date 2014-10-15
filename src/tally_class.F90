@@ -20,11 +20,14 @@ module tally_class
     real(8), allocatable :: migration_s2(:)
     real(8), allocatable :: removal_s1(:)
     real(8), allocatable :: removal_s2(:)
+    real(8), allocatable :: total_s1(:)
+    real(8), allocatable :: total_s2(:)
     contains
       procedure, public :: add_flux_score => tally_add_flux_score
       procedure, public :: add_kill_score => tally_add_kill_score
       procedure, public :: add_migration_score => tally_add_migration_score
       procedure, public :: add_removal_score => tally_add_removal_score
+      procedure, public :: add_total_score => tally_add_total_score
       procedure, public :: clear => tally_clear
       procedure, public :: get_energy_bin => tally_get_energy_bin
       procedure, public :: get_nbins => tally_get_nbins
@@ -123,6 +126,27 @@ contains
   end subroutine tally_add_removal_score
 
 !===============================================================================
+! TALLY_ADD_TOTAL_SCORE
+!===============================================================================
+
+  subroutine tally_add_total_score(self, group, score)
+
+    class(Tally), intent(inout) :: self
+    integer, intent(in) :: group
+    real(8), intent(in) :: score
+
+    integer :: bin
+
+    ! Change group to bin
+    bin = self % get_nbins() - group + 1
+
+    ! Save tally
+    self % total_s1(bin) = self % total_s1(bin) + score
+    self % total_s2(bin) = self % total_s2(bin) + score**2
+
+  end subroutine tally_add_total_score
+
+!===============================================================================
 ! TALLY_CLEAR
 !===============================================================================
 
@@ -139,6 +163,8 @@ contains
     if (allocated(self % migration_s2)) deallocate(self % migration_s2)
     if (allocated(self % removal_s1)) deallocate(self % removal_s1)
     if (allocated(self % removal_s2)) deallocate(self % removal_s2)
+    if (allocated(self % total_s1)) deallocate(self % total_s1)
+    if (allocated(self % total_s2)) deallocate(self % total_s2)
 
   end subroutine tally_clear
 
@@ -216,6 +242,8 @@ contains
     allocate(self % migration_s2(nbins))
     allocate(self % removal_s1(nbins))
     allocate(self % removal_s2(nbins))
+    allocate(self % total_s1(nbins))
+    allocate(self % total_s2(nbins))
     self % flux_s1 = ZERO
     self % flux_s2 = ZERO
     self % kill_s1 = ZERO
@@ -224,6 +252,8 @@ contains
     self % migration_s2 = ZERO
     self % removal_s1 = ZERO
     self % removal_s2 = ZERO
+    self % total_s1 = ZERO
+    self % total_s2 = ZERO
 
   end subroutine tally_initialize
 
@@ -297,6 +327,13 @@ contains
       write(103, *) self % kill_s1(i)
     end do
     close(103)
+
+    ! Write out total score
+    open(FILE="total_rate.out", UNIT=104, ACTION="write")
+    do i = 1, self % nbins
+      write(104, *) self % total_s1(i)
+    end do
+    close(104)
 
   end subroutine tally_write
 
