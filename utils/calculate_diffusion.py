@@ -7,6 +7,7 @@ import numpy as np
 with open('energy.out', 'r') as fh:
     lines = fh.read().splitlines()
 energy = np.array([float(x) for x in lines])
+ng = energy.shape[0]
 
 # Get cumulative migration area rate
 with open('migration_rate.out', 'r') as fh:
@@ -37,6 +38,27 @@ removal_xs = removal_rate / flux
 # Calculate cumulative diffusion coefficient
 difftog = mig_area*removal_xs
 
+# Reverse data for easy looping
+difftog = difftog[::-1]
+flux = flux[::-1]
+
+# Calculate diffusion coefficients
+diff = np.empty(difftog.shape, dtype=float)
+diff[0] = difftog[0]
+for i in range(diff.shape[0]-1):
+    ii = i + 1
+    diffrate = 0.0
+    fluxsum = 0.0
+    for j in range(ii-1):
+        diffrate += diff[j]*flux[j]
+        fluxsum += flux[j]
+    diff[ii] = (difftog[ii]*fluxsum - diffrate)/flux[ii]
+
+# Reverse arrays back
+difftog = difftog[::-1]
+flux = flux[::-1]
+diff = diff[::-1]
+
 # Make plots
 mig_rate_plt = plt.figure()
 mig_rate_ax = plt.gca()
@@ -58,7 +80,7 @@ mig_rate_plt = plt.figure()
 mig_rate_ax = plt.gca()
 mig_rate_ax.set_yscale('log')
 mig_rate_ax.set_xscale('log')
-mig_rate_ax.set_ylabel('Cumulative migration area')
+mig_rate_ax.set_ylabel('Cumulative migration area [cm^2]')
 mig_rate_ax.set_xlabel('Energy [MeV]')
 mig_rate_ax.plot(energy, mig_area)
 
@@ -74,7 +96,7 @@ removal_xs_plt = plt.figure()
 removal_xs_ax = plt.gca()
 removal_xs_ax.set_yscale('log')
 removal_xs_ax.set_xscale('log')
-removal_xs_ax.set_ylabel('Removal XS')
+removal_xs_ax.set_ylabel('Removal XS [1/cm]')
 removal_xs_ax.set_xlabel('Energy [MeV]')
 removal_xs_ax.plot(energy, removal_xs)
 
@@ -85,5 +107,13 @@ difftog_ax.set_xscale('log')
 difftog_ax.set_ylabel('Cumlative D to group')
 difftog_ax.set_xlabel('Energy [MeV]')
 difftog_ax.plot(energy, difftog)
+
+diff_plt = plt.figure()
+diff_ax = plt.gca()
+diff_ax.set_yscale('log')
+diff_ax.set_xscale('log')
+diff_ax.set_ylabel('Diffusion coefficient [cm]')
+diff_ax.set_xlabel('Energy [MeV]')
+diff_ax.plot(energy, diff)
 
 plt.show()
