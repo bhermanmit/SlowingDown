@@ -555,8 +555,9 @@ contains
     ! Record scattering tallies
     if (self % get_reaction_type() == REACTION_SCATTERED) then
       call scat_tal % add_score(energy_group_last, weight)
-      if (energy_group == energy_group_last) &
-           call winscatc_tal % add_score(energy_group, weight)
+      do i = energy_group, flux_tal % get_nbins()
+        call winscatc_tal % add_score(i, weight)
+      end do
     else
       call abs_tal % add_score(energy_group_last, weight)
     end if

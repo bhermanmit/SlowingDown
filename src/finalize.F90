@@ -2,7 +2,7 @@ module finalize
 
   use nuclide_class,  only: nuclides, n_nuclides
   use tally_class,    only: flux_tal, abs_tal, scat_tal, r2c_tal, &
-                            outscatc_tal, winscatc_tal
+                            outscatc_tal, winscatc_tal, wc_tal
 
   implicit none
 
@@ -23,6 +23,7 @@ contains
     call r2c_tal % write("r2c.out")
     call outscatc_tal % write("outscatterc.out")
     call winscatc_tal % write("withinscatterc.out")
+    call wc_tal % write("wc.out")
 
     ! Free nuclide memory
     do i = 1, n_nuclides
@@ -36,6 +37,7 @@ contains
     call r2c_tal % clear()
     call outscatc_tal % clear()
     call winscatc_tal % clear()
+    call wc_tal % clear()
 
   end subroutine finalize_run
 
