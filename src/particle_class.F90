@@ -4,7 +4,8 @@ module particle_class
                          REACTION_SCATTERED
   use cross_section_header 
   use random,      only: prn
-  use tally_class, only: tal
+  use tally_class,    only: flux_tal, abs_tal, scat_tal, r2c_tal, &
+                            outscatc_tal, winscatc_tal, wc_tal
 
   implicit none
 
@@ -33,7 +34,7 @@ module particle_class
     contains
       procedure, public :: add_macros => particle_add_macros
       procedure, public :: begin_collision => particle_begin_collision
-      procedure, public :: calc_displacement => particle_calc_displacement
+      procedure, public :: calc_displacement2 => particle_calc_displacement2
       procedure, public :: clear => particle_clear
       procedure, public :: get_alive => particle_get_alive
       procedure, public :: get_distance => particle_get_distance
@@ -106,14 +107,14 @@ contains
 ! PARTICLE_CALC_DISPLACEMENT
 !===============================================================================
 
-  function particle_calc_displacement(self) result(displacement)
+  function particle_calc_displacement2(self) result(displacement2)
 
     class(Particle) :: self
-    real(8) :: displacement
+    real(8) :: displacement2
 
-    displacement = sqrt(sum((self % xyz - self % xyz_start)**2))
+    displacement2 = sum((self % xyz - self % xyz_start)**2)
 
-  end function particle_calc_displacement
+  end function particle_calc_displacement2
 
 !===============================================================================
 ! PARTICLE_CLEAR
@@ -321,10 +322,10 @@ contains
     integer :: energy_group
 
     ! get the energy bin
-    energy_group = tal % get_energy_bin(self % E)
+    energy_group = flux_tal % get_energy_bin(self % E)
 
     ! convert energy bin to energy group
-    energy_group = tal % get_nbins() - energy_group + 1
+    energy_group = flux_tal % get_nbins() - energy_group + 1
 
   end function particle_lookup_energy_group
 
@@ -540,7 +541,7 @@ contains
     integer :: energy_group
     integer :: energy_group_last
     integer :: i
-    real(8) :: displacement
+    real(8) :: displacement2
     real(8) :: weight
 
     ! Extract data
@@ -549,13 +550,19 @@ contains
     energy_group_last = self % get_energy_group_last()
 
     ! Record flux tally at each collision, uses pre-collision energy group
-    call tal % add_flux_score(energy_group_last, weight/self % get_macro_total())
+    call flux_tal % add_score(energy_group_last, weight/self % get_macro_total())
 
-    ! Record total reaction rate tally
-    call tal % add_total_score(energy_group_last, weight)
+    ! Record scattering tallies
+    if (self % get_reaction_type() == REACTION_SCATTERED) then
+      call scat_tal % add_score(energy_group_last, weight)
+      if (energy_group == energy_group_last) &
+           call winscatc_tal % add_score(energy_group, weight)
+    else
+      call abs_tal % add_score(energy_group_last, weight)
+    end if
 
-    ! Record cumulative migration area (assumes only downscatter)
-    displacement = self % calc_displacement()
+    ! Record cumulative tallies
+    displacement2 = self % calc_displacement2()
     if (self % get_reaction_type() == REACTION_SCATTERED) then
 
       ! for a scattering out of group h to group g, we
@@ -564,29 +571,19 @@ contains
       ! is then marked as the reference position for the next
       ! collision 
       do i = energy_group_last, energy_group - 1
-        call tal % add_migration_score(i, weight*displacement)
-        call tal % add_kill_score(i, weight)
+        call r2c_tal % add_score(i, weight*displacement2)
+        call wc_tal % add_score(i, weight)
+        call outscatc_tal % add_score(i, weight)
       end do
-      call self % mark_position()
     else
 
       ! for absorption, we tally in the absorbed groups and all the
       ! groups below in energy
-      do i = energy_group, tal % get_nbins()
-        call tal % add_migration_score(i, weight*displacement)
-        call tal % add_kill_score(i, weight)
+      do i = energy_group, flux_tal % get_nbins()
+        call r2c_tal % add_score(i, weight*displacement2)
+        call wc_tal % add_score(i, weight)
       end do
     end if
-
-    ! Check for removal via absorption or out-scatter
-    if (self % get_reaction_type() == REACTION_SCATTERED) then
-      if (energy_group /= energy_group_last) then
-          call tal % add_removal_score(energy_group_last, weight)
-      end if
-    else
-      call tal % add_removal_score(energy_group_last, weight)
-    end if 
-
 
   end subroutine particle_tally
 

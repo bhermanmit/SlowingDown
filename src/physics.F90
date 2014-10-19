@@ -5,7 +5,6 @@ module physics
   use particle_class,  only: Particle
   use nuclide_class,   only: n_nuclides, nuclides
   use random,          only: prn
-  use tally_class,     only: tal
 
   implicit none
   private
