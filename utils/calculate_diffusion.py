@@ -51,17 +51,9 @@ xs_s = scatt_rate / flux
 flux = flux/flux.sum()
 
 # Calculate cumulative flux, scattering and absoption
-cflux = np.zeros(flux.shape)
-cabs = np.zeros(abs_rate.shape)
-cscatt = np.zeros(scatt_rate.shape)
-cflux[0] = flux[0]
-cabs[0] = xs_a[0]*flux[0]
-cscatt[0] = xs_s[0]*flux[0]
-for ngg in range(ng):
-    for ng in range(ngg):
-        cflux[ngg] += flux[ng]
-        cabs[ngg] += flux[ng]*xs_a[ng]
-        cscatt[ngg] += flux[ng]*xs_s[ng]
+cflux = np.cumsum(flux)
+cabs = np.cumsum(xs_a*flux) 
+cscatt = np.cumsum(xs_s*flux)
 
 # Calculate cumulative xs
 xsc_a = cabs / cflux
@@ -82,7 +74,7 @@ for i in range(diff.shape[0]-1):
     ii = i + 1
     diffrate = 0.0
     fluxsum = flux[ii]
-    for j in range(ii-1):
+    for j in range(ii):
         diffrate += diff[j]*flux[j]
         fluxsum += flux[j]
         diff[ii] = (diffc[ii]*fluxsum - diffrate)/flux[ii]
