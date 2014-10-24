@@ -12,6 +12,16 @@ def plot(energy, yaxis, ylabel):
     total_ax.set_xlabel('Energy [MeV]')
     total_ax.plot(energy, yaxis)
 
+def plot_fast(energy, yaxis, ylabel):
+    total_plt = plt.figure()
+    total_ax = plt.gca()
+    total_ax.set_yscale('log')
+    total_ax.set_xscale('log')
+    total_ax.set_ylabel(ylabel)
+    total_ax.set_xlabel('Energy [MeV]')
+    total_ax.plot(energy, yaxis)
+    plt.xlim([0.625e-6, 20.0])
+
 def readin(filename):
     with open(filename, 'r') as fh:
         lines = fh.read().splitlines()
@@ -19,6 +29,10 @@ def readin(filename):
     data = data[1:] # remove most thermal group
     data = data[::-1] # reverse area for easy computation later
     return data
+
+# True answer
+energy_ratio = readin("energy_ratio.dat")
+ratio = readin("ratio.dat")
 
 # Get energy grid
 energy = readin("energy.out")
@@ -49,6 +63,7 @@ winscatt_rate = readin("withinscatterc.out")
 xs_a = abs_rate / flux
 xs_s = scatt_rate / flux
 flux = flux/flux.sum()
+xs_t = xs_a + xs_s
 
 # Calculate cumulative flux, scattering and absoption
 cflux = np.cumsum(flux)
@@ -77,10 +92,14 @@ for i in range(diff.shape[0]-1):
     for j in range(ii):
         diffrate += diff[j]*flux[j]
         fluxsum += flux[j]
-        diff[ii] = (diffc[ii]*fluxsum - diffrate)/flux[ii]
+    diff[ii] = (diffc[ii]*fluxsum - diffrate)/flux[ii]
+
+# Calculate transport xs
+xs_tr = 1.0/(3.0*diff) 
 
 # Plots
 plot(energy, flux, "Flux")
+plot(energy, xs_t, "Total XS")
 plot(energy, cflux, "Cumulative Flux")
 plot(energy, xsc_a, "Cumuative Absorption XS")
 plot(energy, xsc_s, "Cumulative Scattering XS")
@@ -88,4 +107,16 @@ plot(energy, probc, "Outscattering probability")
 plot(energy, xsc_r, "Cumulative Removal XS")
 plot(energy, mig_area, "Cumulative Migration Area")
 plot(energy, diffc, "Cumulative Diff Coef")
+
+# Custom plot for diffusion coefficient
+plot_fast(energy, diff, "Diff Coef")
+plot_fast(energy, xs_tr, "Transport XS")
+ratio_plt = plt.figure()
+ratio_ax = plt.gca()
+ratio_ax.set_xscale('log')
+ratio_ax.set_ylabel("Transport-to-Total XS")
+ratio_ax.set_xlabel('Energy [MeV]')
+ratio_ax.plot(energy, xs_tr/xs_t, 'b-', energy_ratio, ratio, 'r--')
+plt.xlim([0.625e-6, 20.0])
+
 plt.show()
