@@ -208,6 +208,7 @@ contains
         ! Back info back in particle
         call p % set_energy(E_out)
         call p % set_uvw(uvw_out)
+        call p % set_mulab(mu)
 
       case (REACTION_ABSORBED)
 

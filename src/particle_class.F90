@@ -5,7 +5,8 @@ module particle_class
   use cross_section_header 
   use random,      only: prn
   use tally_class,    only: flux_tal, abs_tal, scat_tal, r2c_tal, &
-                            outscatc_tal, winscatc_tal, wc_tal
+                            outscatc_tal, winscatc_tal, wc_tal, &
+                            p1_scat_tal
 
   implicit none
 
@@ -24,6 +25,7 @@ module particle_class
     real(8) :: E ! energy
     real(8) :: E_last ! energy
     real(8) :: macro_total
+    real(8) :: mulab ! mu in LAB system
     real(8) :: uvw(3) ! direction of travel
     real(8) :: weight ! statistical weight
     real(8) :: xyz(3) ! spatial position
@@ -44,6 +46,7 @@ module particle_class
       procedure, public :: get_energy_group_last => &
                            particle_get_energy_group_last
       procedure, public :: get_macro_total => particle_get_macro_total
+      procedure, public :: get_mulab => particle_get_mulab
       procedure, public :: get_nuclide_macroxs_a => &
                            particle_get_nuclide_macroxs_a
       procedure, public :: get_nuclide_macroxs_t => &
@@ -61,6 +64,7 @@ module particle_class
       procedure, public :: set_energy => particle_set_energy
       procedure, public :: set_energy_group => particle_set_energy_group
       procedure, public :: set_macro_total => particle_set_macro_total
+      procedure, public :: set_mulab => particle_set_mulab
       procedure, public :: set_nuclide_index => particle_set_nuclide_index
       procedure, public :: set_n_collisions => particle_set_n_collisions
       procedure, public :: set_reaction_type => particle_set_reaction_type
@@ -218,6 +222,19 @@ contains
     macro_total = self % macro_total
 
   end function particle_get_macro_total
+
+!===============================================================================
+! PARTICLE_GET_MULAB
+!===============================================================================
+
+  function particle_get_mulab(self) result(mulab)
+
+    class(Particle) :: self
+    real(8) :: mulab
+
+    mulab = self % mulab
+
+  end function particle_get_mulab
 
 !===============================================================================
 ! PARTICLE_GET_NUCLIDE_MACROXS_A
@@ -423,6 +440,19 @@ contains
   end subroutine particle_set_macro_total
 
 !===============================================================================
+! PARTICLE_SET_MULAB
+!===============================================================================
+
+  subroutine particle_set_mulab(self, mulab)
+
+    class(Particle), intent(inout) :: self
+    real(8), intent(in) :: mulab
+
+    self % mulab = mulab
+
+  end subroutine particle_set_mulab
+
+!===============================================================================
 ! PARTICLE_SET_NUCLIDE_INDEX
 !===============================================================================
 
@@ -555,6 +585,7 @@ contains
     ! Record scattering tallies
     if (self % get_reaction_type() == REACTION_SCATTERED) then
       call scat_tal % add_score(energy_group_last, weight)
+      call p1_scat_tal % add_score(energy_group_last, weight*self % get_mulab())
       do i = energy_group, flux_tal % get_nbins()
         call winscatc_tal % add_score(i, weight)
       end do

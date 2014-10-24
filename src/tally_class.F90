@@ -33,6 +33,7 @@ module tally_class
   type(Tally), public, save :: outscatc_tal
   type(Tally), public, save :: winscatc_tal
   type(Tally), public, save :: wc_tal
+  type(Tally), public, save :: p1_scat_tal
 
 contains
 

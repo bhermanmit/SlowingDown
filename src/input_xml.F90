@@ -5,7 +5,8 @@ module input_xml
   use nuclide_class,  only: n_nuclides, nuclides, Nuclide
   use output,         only: write_message, fatal_error, message
   use tally_class,    only: flux_tal, abs_tal, scat_tal, r2c_tal, &
-                            outscatc_tal, winscatc_tal, wc_tal
+                            outscatc_tal, winscatc_tal, wc_tal, &
+                            p1_scat_tal
   use xml_interface
 
   implicit none
@@ -113,6 +114,7 @@ contains
           call outscatc_tal % set_type(EQUAL_LETHARGY)
           call winscatc_tal % set_type(EQUAL_LETHARGY)
           call wc_tal % set_type(EQUAL_LETHARGY)
+          call p1_scat_tal % set_type(EQUAL_LETHARGY)
           if (check_for_node(node_tal, "nbins")) then
             call get_node_value(node_tal, "nbins", tally_nbins)
             call flux_tal % set_nbins(tally_nbins)
@@ -122,6 +124,7 @@ contains
             call outscatc_tal % set_nbins(tally_nbins)
             call winscatc_tal % set_nbins(tally_nbins)
             call wc_tal % set_nbins(tally_nbins)
+            call p1_scat_tal % set_nbins(tally_nbins)
           else
             message = 'Must specify tally bins.'
             call fatal_error()
@@ -149,6 +152,7 @@ contains
     call outscatc_tal % initialize()
     call winscatc_tal % initialize()
     call wc_tal % initialize()
+    call p1_scat_tal % initialize()
 
     ! Close input XML file
     call close_xmldoc(doc)

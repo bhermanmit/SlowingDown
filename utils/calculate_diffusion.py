@@ -53,6 +53,9 @@ scatt_rate = readin("scattering.out")
 # Get absortpion rate
 abs_rate = readin("absorption.out")
 
+# Get p1 scattering rate
+p1_scatt_rate = readin("p1_scattering.out")
+
 # Get cumulative outscatter rate
 outscatt_rate = readin("outscatterc.out")
 
@@ -62,6 +65,7 @@ winscatt_rate = readin("withinscatterc.out")
 # Calculate xs
 xs_a = abs_rate / flux
 xs_s = scatt_rate / flux
+p1_xs_s = p1_scatt_rate / flux
 flux = flux/flux.sum()
 xs_t = xs_a + xs_s
 
@@ -94,8 +98,11 @@ for i in range(diff.shape[0]-1):
         fluxsum += flux[j]
     diff[ii] = (diffc[ii]*fluxsum - diffrate)/flux[ii]
 
-# Calculate transport xs
+# Calculate transport xs based on diffusion coeff
 xs_tr = 1.0/(3.0*diff) 
+
+# Calculate transport xs based on outscatter approx
+xs_tr_out = xs_t - p1_xs_s
 
 # Plots
 plot(energy, flux, "Flux")
@@ -107,6 +114,7 @@ plot(energy, probc, "Outscattering probability")
 plot(energy, xsc_r, "Cumulative Removal XS")
 plot(energy, mig_area, "Cumulative Migration Area")
 plot(energy, diffc, "Cumulative Diff Coef")
+plot(energy, p1_xs_s / xs_s, "Mu_bar")
 
 # Custom plot for diffusion coefficient
 plot_fast(energy, diff, "Diff Coef")
@@ -116,7 +124,7 @@ ratio_ax = plt.gca()
 ratio_ax.set_xscale('log')
 ratio_ax.set_ylabel("Transport-to-Total XS")
 ratio_ax.set_xlabel('Energy [MeV]')
-ratio_ax.plot(energy, xs_tr/xs_t, 'b-', energy_ratio, ratio, 'r--')
+ratio_ax.plot(energy, xs_tr/xs_t, 'b-', energy_ratio, ratio, 'r--', energy, xs_tr_out/xs_t, 'g.')
 plt.xlim([0.625e-6, 20.0])
 
 plt.show()
