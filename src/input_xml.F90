@@ -174,6 +174,7 @@ contains
     integer :: npts
     logical :: file_exists
     real(8) :: mass
+    real(8) :: temperature
     real(8), allocatable :: E(:)
     real(8), allocatable :: xs_a(:)
     real(8), allocatable :: xs_s(:)
@@ -203,6 +204,10 @@ contains
       ! Read in atomic weight 
       call get_node_value(doc, "mass", mass)
       call nuc % set_mass(mass)
+
+      ! Read in temperature
+      call get_node_value(doc, "temperature", temperature)
+      call nuc % set_temperature(temperature)
 
       ! Get size of grid
       npts = get_arraysize_double(doc, "E")

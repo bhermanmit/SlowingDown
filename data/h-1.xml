@@ -1,6 +1,7 @@
 <xs_data>
   <name>H-1</name>
   <mass> 1.00782504 </mass>
+  <temperature> 300.0 </temperature>
   <E>
     .9e-12
     1.02999e-11

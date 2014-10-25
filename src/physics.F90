@@ -1,7 +1,7 @@
 module physics
 
   use constants,       only: ZERO, REACTION_ABSORBED, REACTION_SCATTERED, &
-                             ONE, TWO, PI, MASS_NEUTRON
+                             ONE, TWO, PI, MASS_NEUTRON, K_BOLTZMANN
   use particle_class,  only: Particle
   use nuclide_class,   only: n_nuclides, nuclides
   use random,          only: prn
@@ -129,6 +129,7 @@ contains
     real(8) :: speed_out
     real(8) :: speed_in_cm
     real(8) :: speed_out_cm
+    real(8) :: temperature
     real(8) :: uvw_in(3)
     real(8) :: uvw_out(3)
     real(8) :: uvw_in_cm(3)
@@ -138,6 +139,7 @@ contains
     real(8) :: v_out(3)
     real(8) :: v_in_cm(3)
     real(8) :: v_out_cm(3)
+    real(8) :: v_t(3)
 
     ! Get the reaction type
     reaction_type = p % get_reaction_type()
@@ -166,8 +168,13 @@ contains
         ! Calculate incoming velocity in LAB
         v_in = speed_in*uvw_in
 
+        ! Get the target nuclide velocity
+        temperature = nuclides(nuclide_idx) % get_temperature()
+        call sample_cxs_target_velocity(A, temperature*K_BOLTZMANN, &
+             v_t, E_in, uvw_in)
+
         ! Calculate center of mass velocity
-        v_cm = v_in/(A + ONE)
+        v_cm = (v_in + A*v_t)/(A + ONE)
 
         ! Calculate incoming neutron velocity in CM
         v_in_cm = v_in - v_cm
@@ -217,6 +224,78 @@ contains
     end select
 
   end subroutine collision_physics
+
+!===============================================================================
+! SAMPLE_CXS_TARGET_VELOCITY samples a target velocity based on the free gas
+! scattering formulation, used by most Monte Carlo codes, in which cross section
+! is assumed to be constant in energy. Excellent documentation for this method
+! can be found in FRA-TM-123.
+!===============================================================================
+
+  subroutine sample_cxs_target_velocity(awr, kT, v_target, E, uvw)
+
+    real(8), intent(out)    :: v_target(3)
+    real(8), intent(in)     :: E
+    real(8), intent(in)     :: uvw(3)
+    real(8), intent(in)     :: awr
+    real(8), intent(in)     :: kT
+
+    real(8) :: alpha       ! probability of sampling f2 over f1
+    real(8) :: mu          ! cosine of angle between neutron and target vel
+    real(8) :: r1, r2      ! pseudo-random numbers
+    real(8) :: c           ! cosine used in maxwell sampling
+    real(8) :: accept_prob ! probability of accepting combination of vt and mu
+    real(8) :: beta_vn     ! beta * speed of neutron
+    real(8) :: beta_vt     ! beta * speed of target
+    real(8) :: beta_vt_sq  ! (beta * speed of target)^2
+    real(8) :: vt          ! speed of target
+
+    beta_vn = sqrt(awr * E / kT)
+    alpha = ONE/(ONE + sqrt(pi)*beta_vn/TWO)
+
+    do
+      ! Sample two random numbers
+      r1 = prn()
+      r2 = prn()
+
+      if (prn() < alpha) then
+        ! With probability alpha, we sample the distribution p(y) =
+        ! y*e^(-y). This can be done with sampling scheme C45 frmo the Monte
+        ! Carlo sampler
+
+        beta_vt_sq = -log(r1*r2)
+
+      else
+        ! With probability 1-alpha, we sample the distribution p(y) = y^2 *
+        ! e^(-y^2). This can be done with sampling scheme C61 from the Monte
+        ! Carlo sampler
+
+        c = cos(PI/TWO * prn())
+        beta_vt_sq = -log(r1) - log(r2)*c*c
+      end if
+
+      ! Determine beta * vt
+      beta_vt = sqrt(beta_vt_sq)
+
+      ! Sample cosine of angle between neutron and target velocity
+      mu = TWO*prn() - ONE
+
+      ! Determine rejection probability
+      accept_prob = sqrt(beta_vn*beta_vn + beta_vt_sq - 2*beta_vn*beta_vt*mu) &
+        /(beta_vn + beta_vt)
+
+      ! Perform rejection sampling on vt and mu
+      if (prn() < accept_prob) exit
+    end do
+
+    ! Determine speed of target nucleus
+    vt = sqrt(beta_vt_sq*kT/awr)
+
+    ! Determine velocity vector of target nucleus based on neutron's velocity
+    ! and the sampled angle between them
+    v_target = vt * rotate_angle(uvw, mu)
+
+  end subroutine sample_cxs_target_velocity
 
 !===============================================================================
 ! ROTATE_ANGLE rotates direction cosines through a polar angle whose cosine is

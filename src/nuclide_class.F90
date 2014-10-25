@@ -14,6 +14,7 @@ module nuclide_class
     character(len=MAX_LINE_LEN) :: xs_file ! cross section file
     real(8) :: mass ! atomic mass
     real(8) :: dens ! number density
+    real(8) :: temperature ! temperature in K
     real(8), allocatable :: energy(:) ! energy array of nuclide cross section
     real(8), allocatable :: xs_s(:) ! scattering micro xs
     real(8), allocatable :: xs_a(:) ! absorption mircro xs
@@ -23,6 +24,7 @@ module nuclide_class
       procedure, public :: clear => nuclide_clear
       procedure, public :: get_density => nuclide_get_density
       procedure, public :: get_mass => nuclide_get_mass
+      procedure, public :: get_temperature => nuclide_get_temperature
       procedure, public :: get_xs_file => nuclide_get_xs_file
       procedure, public :: interp_xs_a => nuclide_interp_xs_a
       procedure, public :: interp_xs_s => nuclide_interp_xs_s
@@ -30,6 +32,7 @@ module nuclide_class
       procedure, public :: set_energy => nuclide_set_energy
       procedure, public :: set_mass => nuclide_set_mass
       procedure, public :: set_name => nuclide_set_name
+      procedure, public :: set_temperature => nuclide_set_temperature
       procedure, public :: set_xs_s => nuclide_set_xs_s
       procedure, public :: set_xs_a => nuclide_set_xs_a
       procedure, public :: set_xs_file => nuclide_set_xs_file
@@ -69,6 +72,19 @@ contains
     mass = self % mass
 
   end function nuclide_get_mass
+
+!===============================================================================
+! NUCLIDE_GET_TEMPERATURE
+!===============================================================================
+
+  function nuclide_get_temperature(self) result(temperature)
+
+    class(Nuclide) :: self
+    real(8) :: temperature
+
+    temperature = self % temperature
+
+  end function nuclide_get_temperature
 
 !===============================================================================
 ! NUCLIDE_GET_XS_FILE
@@ -176,6 +192,19 @@ contains
     self % name = name 
 
   end subroutine nuclide_set_name
+
+!===============================================================================
+! NUCLIDE_SET_TEMPERATURE
+!===============================================================================
+
+  subroutine nuclide_set_temperature(self, temperature)
+
+    class(Nuclide), intent(inout) :: self
+    real(8), intent(in) :: temperature 
+
+    self % temperature = temperature
+
+  end subroutine nuclide_set_temperature
 
 !===============================================================================
 ! NUCLIDE_SET_XS_FILE
